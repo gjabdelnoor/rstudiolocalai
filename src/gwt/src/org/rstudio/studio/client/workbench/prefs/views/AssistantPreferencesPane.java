@@ -79,8 +79,11 @@ import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.PasswordTextBox;
 import com.google.gwt.user.client.ui.SimplePanel;
+import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
+import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
 
@@ -104,6 +107,13 @@ public class AssistantPreferencesPane extends PreferencesPane
             selectedAssistant.equals(UserPrefsAccessor.ASSISTANT_COPILOT));
       prefs.copilotTabKeyBehavior().setGlobalValue(selAssistantTabKeyBehavior_.getValue());
       prefs.copilotCompletionsTrigger().setGlobalValue(selAssistantCompletionsTrigger_.getValue());
+
+      // OpenAI-compatible chat configuration. The thinking/interleaved
+      // checkboxes and the max-context field are registered via the
+      // checkboxPref/numericPref helpers and saved by super.onApply().
+      prefs.aiBaseUrl().setGlobalValue(tbAiBaseUrl_.getText().trim());
+      prefs.aiModel().setGlobalValue(tbAiModel_.getText().trim());
+      prefs.aiApiKey().setGlobalValue(tbAiApiKey_.getText());
 
       return super.onApply(prefs);
    }
@@ -298,6 +308,33 @@ public class AssistantPreferencesPane extends PreferencesPane
             false);
       selChatProvider_.setValue(prefs_.chatProvider().getGlobalValue());
 
+      // OpenAI-compatible chat configuration (self-hosted backend). These
+      // settings replace the Posit account sign-in: the chat pane talks
+      // directly to any OpenAI-compatible /v1 endpoint using these values.
+      tbAiBaseUrl_ = new TextBox();
+      tbAiBaseUrl_.setWidth("380px");
+      tbAiBaseUrl_.setText(prefs_.aiBaseUrl().getGlobalValue());
+      tbAiBaseUrl_.setTitle(prefs_.aiBaseUrl().getDescription());
+
+      tbAiModel_ = new TextBox();
+      tbAiModel_.setWidth("260px");
+      tbAiModel_.setText(prefs_.aiModel().getGlobalValue());
+      tbAiModel_.setTitle(prefs_.aiModel().getDescription());
+
+      tbAiApiKey_ = new PasswordTextBox();
+      tbAiApiKey_.setWidth("380px");
+      tbAiApiKey_.setText(prefs_.aiApiKey().getGlobalValue());
+      tbAiApiKey_.setTitle(prefs_.aiApiKey().getDescription());
+
+      cbAiThinking_ = checkboxPref(prefs_.aiThinkingEnabled(), true);
+      cbAiInterleavedThinking_ = checkboxPref(prefs_.aiInterleavedThinkingEnabled(), true);
+
+      nvwAiMaxContext_ = numericPref(
+            prefs_.aiMaxContextSize().getTitle(),
+            1,
+            100000000,
+            prefs_.aiMaxContextSize());
+
       linkCopilotTos_ = new HelpLink(
             constants_.copilotTermsOfServiceLinkLabel(),
             "github-copilot-terms-of-service",
@@ -337,6 +374,10 @@ public class AssistantPreferencesPane extends PreferencesPane
    {
       // Chat section (displayed first)
       add(headerLabel(constants_.assistantChatTab()));
+
+      // OpenAI-compatible provider configuration (self-hosted backend).
+      add(createOpenAiPanel());
+
       add(selChatProvider_);
 
       // Add change handler for chat provider to check for Posit Assistant installation
@@ -525,6 +566,46 @@ public class AssistantPreferencesPane extends PreferencesPane
       Label lblInfo = new Label(constants_.assistantNoneInfo());
       panel.add(spaced(lblInfo));
       return panel;
+   }
+
+   /**
+    * Builds the OpenAI-compatible provider configuration section. These
+    * settings power the chat pane directly (no Posit account or sign-in):
+    * base URL, model, API key, thinking, interleaved thinking, and the
+    * maximum context size.
+    */
+   private VerticalPanel createOpenAiPanel()
+   {
+      VerticalPanel panel = new VerticalPanel();
+
+      Label info = new Label(
+         "Connect the AI chat to any OpenAI-compatible API (the legacy v1 " +
+         "chat completions endpoint). Changes take effect the next time the " +
+         "AI pane starts.");
+      info.getElement().getStyle().setFontStyle(FontStyle.ITALIC);
+      panel.add(lessSpaced(info));
+
+      panel.add(labeledInput(prefs_.aiBaseUrl().getTitle(), tbAiBaseUrl_));
+      panel.add(labeledInput(prefs_.aiModel().getTitle(), tbAiModel_));
+      panel.add(labeledInput(prefs_.aiApiKey().getTitle(), tbAiApiKey_));
+      panel.add(nvwAiMaxContext_);
+      panel.add(cbAiThinking_);
+      panel.add(cbAiInterleavedThinking_);
+
+      return panel;
+   }
+
+   /**
+    * Returns a small vertical group with a label above the given input.
+    */
+   private VerticalPanel labeledInput(String labelText, Widget input)
+   {
+      VerticalPanel group = new VerticalPanel();
+      Label label = new Label(labelText);
+      group.add(label);
+      group.add(input);
+      lessSpaced(group);
+      return group;
    }
 
    private HorizontalPanel createStatusPanel()
@@ -1384,6 +1465,12 @@ public class AssistantPreferencesPane extends PreferencesPane
    private final SelectWidget selAssistantTabKeyBehavior_;
    private final SelectWidget selAssistantCompletionsTrigger_;
    private final SelectWidget selChatProvider_;
+   private final TextBox tbAiBaseUrl_;
+   private final TextBox tbAiModel_;
+   private final PasswordTextBox tbAiApiKey_;
+   private final CheckBox cbAiThinking_;
+   private final CheckBox cbAiInterleavedThinking_;
+   private final NumericValueWidget nvwAiMaxContext_;
    private final HelpLink linkCopilotTos_;
    private final Label lblCopilotTos_;
    private final Label lblProjectOverride_;

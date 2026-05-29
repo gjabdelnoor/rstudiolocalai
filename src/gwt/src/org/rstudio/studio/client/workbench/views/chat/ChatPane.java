@@ -987,6 +987,13 @@ public class ChatPane
       popOutButton_ = commands_.popOutChat().createToolbarButton();
       toolbar_.addRightWidget(popOutButton_);
 
+      // Settings button: opens Global Options to the AI pane, where the
+      // OpenAI-compatible provider is configured (base URL, model, API key,
+      // thinking, interleaved thinking, max context). Replaces the former
+      // account sign-in entry point.
+      settingsButton_ = commands_.showAssistantOptions().createToolbarButton();
+      toolbar_.addRightWidget(settingsButton_);
+
       return toolbar_;
    }
 
@@ -1331,6 +1338,7 @@ public class ChatPane
    private HTML suspendedOverlay_;
    private Toolbar toolbar_;
    private ToolbarButton popOutButton_;
+   private ToolbarButton settingsButton_;
    private boolean listenerSetup_ = false;
    private String pendingMessage_ = null;
    private ChatPresenter.Display.Observer observer_;

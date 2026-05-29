@@ -38,21 +38,31 @@
       return params;
    }
 
-   function readCookie(name) {
-      var m = document.cookie.match(new RegExp('(?:^|;\\s*)' + name + '=([^;]+)'));
-      return m ? decodeURIComponent(m[1]) : '';
-   }
-
-   function resolveWsUrl(params) {
-      if (params.ws) return params.ws;
-      // Derive from current origin (standalone / served by backend).
+   // RStudio (ChatPresenter) passes the backend WebSocket base URL as the
+   // "wsUrl" query param and, in Desktop mode, the auth token as "authToken".
+   // In Server mode the token arrives via an httpOnly cookie that the browser
+   // sends automatically on the WebSocket handshake (not readable from JS).
+   // "ws"/"token" and same-origin derivation are accepted for standalone use.
+   function resolveWsBase(params) {
+      var raw = params.wsUrl || params.ws || '';
       var proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      return proto + '//' + window.location.host + '/ai-chat/ws';
+      var base;
+      if (/^wss?:\/\//i.test(raw)) {
+         base = raw;                                   // absolute (Desktop)
+      } else if (raw) {
+         if (raw.charAt(0) !== '/') raw = '/' + raw;   // relative path (Server)
+         base = proto + '//' + window.location.host + raw;
+      } else {
+         base = proto + '//' + window.location.host + '/ai-chat'; // standalone
+      }
+      // The WebSocket endpoint lives at <base>/ws.
+      return /\/ws$/.test(base) ? base : (base.replace(/\/$/, '') + '/ws');
    }
 
    var PARAMS = readParams();
-   var TOKEN = PARAMS.token || readCookie('posit-assistant-auth') || '';
-   var WS_BASE = resolveWsUrl(PARAMS);
+   // Empty in Server mode -- the httpOnly cookie authenticates the handshake.
+   var TOKEN = PARAMS.authToken || PARAMS.token || '';
+   var WS_BASE = resolveWsBase(PARAMS);
 
    function wsUrlWithToken() {
       if (!TOKEN) return WS_BASE;

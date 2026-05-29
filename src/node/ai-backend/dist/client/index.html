@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<!--
+  RStudio AI chat client.
+
+  Loaded inside the RStudio AI pane (an iframe). RStudio injects a `dark`
+  class on <html> for dark themes and a <meta name="rstudio-theme"> tag with
+  background/foreground colors; both are honored by style.css / app.js.
+-->
+<html lang="en" class="">
+<head>
+   <meta charset="utf-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1">
+   <title>AI</title>
+   <link rel="stylesheet" href="style.css">
+</head>
+<body>
+   <div id="app">
+      <div id="status-bar">
+         <span id="status-dot" class="disconnected"></span>
+         <span id="status-text">Connecting...</span>
+         <span id="model-name"></span>
+      </div>
+
+      <div id="not-configured" class="hidden">
+         <div class="notice">
+            <h2>AI is not configured</h2>
+            <p>
+               No model endpoint is set yet. Open
+               <strong>Tools&nbsp;&rarr;&nbsp;Global&nbsp;Options&nbsp;&rarr;&nbsp;AI</strong>,
+               or click the settings (gear) button on the AI pane toolbar, and
+               provide an OpenAI-compatible <em>Base URL</em> and <em>Model</em>
+               (plus an API key if your provider requires one).
+            </p>
+         </div>
+      </div>
+
+      <div id="messages"></div>
+
+      <form id="composer">
+         <textarea id="input" rows="1" placeholder="Ask the AI assistant... (Enter to send, Shift+Enter for newline)" autocomplete="off"></textarea>
+         <button id="send" type="submit" title="Send">Send</button>
+         <button id="stop" type="button" class="hidden" title="Stop">Stop</button>
+      </form>
+   </div>
+
+   <script src="app.js"></script>
+</body>
+</html>

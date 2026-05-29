@@ -464,6 +464,12 @@ namespace prefs {
 #define kAssistantShowMessages "assistant_show_messages"
 #define kAssistantToolbarButtonVisible "assistant_toolbar_button_visible"
 #define kPositAssistantTestManifest "posit_assistant_test_manifest"
+#define kAiApiKey "ai_api_key"
+#define kAiBaseUrl "ai_base_url"
+#define kAiModel "ai_model"
+#define kAiThinkingEnabled "ai_thinking_enabled"
+#define kAiInterleavedThinkingEnabled "ai_interleaved_thinking_enabled"
+#define kAiMaxContextSize "ai_max_context_size"
 #define kCopilotEnabled "copilot_enabled"
 #define kCopilotCompletionsTrigger "copilot_completions_trigger"
 #define kCopilotCompletionsTriggerAuto "auto"
@@ -2132,6 +2138,42 @@ public:
     */
    bool positAssistantTestManifest();
    core::Error setPositAssistantTestManifest(bool val);
+
+   /**
+    * API key sent as a Bearer token to the OpenAI-compatible chat endpoint. Leave blank for local providers that do not require a key.
+    */
+   std::string aiApiKey();
+   core::Error setAiApiKey(std::string val);
+
+   /**
+    * Base URL of the OpenAI-compatible API (the part before /chat/completions), e.g. https://api.openai.com/v1 or http://localhost:11434/v1.
+    */
+   std::string aiBaseUrl();
+   core::Error setAiBaseUrl(std::string val);
+
+   /**
+    * Name of the model to use for chat, e.g. gpt-4o, o4-mini, or a local model name.
+    */
+   std::string aiModel();
+   core::Error setAiModel(std::string val);
+
+   /**
+    * When enabled, request and display the model's reasoning (sends reasoning_effort and surfaces reasoning output for reasoning-capable models).
+    */
+   bool aiThinkingEnabled();
+   core::Error setAiThinkingEnabled(bool val);
+
+   /**
+    * When enabled, the model's reasoning is streamed inline with the answer; when disabled, reasoning is shown in a separate collapsed block.
+    */
+   bool aiInterleavedThinkingEnabled();
+   core::Error setAiInterleavedThinkingEnabled(bool val);
+
+   /**
+    * Maximum context window size, in tokens, used to trim conversation history before sending a request to the AI provider.
+    */
+   int aiMaxContextSize();
+   core::Error setAiMaxContextSize(int val);
 
    /**
     * When enabled, RStudio will use GitHub Copilot to provide code suggestions.

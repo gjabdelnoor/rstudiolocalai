@@ -2541,6 +2541,65 @@
    clear = function() { .rs.clearUserPref("posit_assistant_test_manifest") }
 )
 
+# AI API key
+#
+# API key sent as a Bearer token to the OpenAI-compatible chat endpoint. Leave
+# blank for local providers that do not require a key.
+.rs.uiPrefs$aiApiKey <- list(
+   get = function() { .rs.getUserPref("ai_api_key") },
+   set = function(value) { .rs.setUserPref("ai_api_key", value) },
+   clear = function() { .rs.clearUserPref("ai_api_key") }
+)
+
+# AI base URL
+#
+# Base URL of the OpenAI-compatible API (the part before /chat/completions), e.g.
+# https://api.openai.com/v1 or http://localhost:11434/v1.
+.rs.uiPrefs$aiBaseUrl <- list(
+   get = function() { .rs.getUserPref("ai_base_url") },
+   set = function(value) { .rs.setUserPref("ai_base_url", value) },
+   clear = function() { .rs.clearUserPref("ai_base_url") }
+)
+
+# AI model
+#
+# Name of the model to use for chat, e.g. gpt-4o, o4-mini, or a local model name.
+.rs.uiPrefs$aiModel <- list(
+   get = function() { .rs.getUserPref("ai_model") },
+   set = function(value) { .rs.setUserPref("ai_model", value) },
+   clear = function() { .rs.clearUserPref("ai_model") }
+)
+
+# Enable thinking
+#
+# When enabled, request and display the model's reasoning (sends reasoning_effort
+# and surfaces reasoning output for reasoning-capable models).
+.rs.uiPrefs$aiThinkingEnabled <- list(
+   get = function() { .rs.getUserPref("ai_thinking_enabled") },
+   set = function(value) { .rs.setUserPref("ai_thinking_enabled", value) },
+   clear = function() { .rs.clearUserPref("ai_thinking_enabled") }
+)
+
+# Enable interleaved thinking
+#
+# When enabled, the model's reasoning is streamed inline with the answer; when
+# disabled, reasoning is shown in a separate collapsed block.
+.rs.uiPrefs$aiInterleavedThinkingEnabled <- list(
+   get = function() { .rs.getUserPref("ai_interleaved_thinking_enabled") },
+   set = function(value) { .rs.setUserPref("ai_interleaved_thinking_enabled", value) },
+   clear = function() { .rs.clearUserPref("ai_interleaved_thinking_enabled") }
+)
+
+# Maximum context size
+#
+# Maximum context window size, in tokens, used to trim conversation history
+# before sending a request to the AI provider.
+.rs.uiPrefs$aiMaxContextSize <- list(
+   get = function() { .rs.getUserPref("ai_max_context_size") },
+   set = function(value) { .rs.setUserPref("ai_max_context_size", value) },
+   clear = function() { .rs.clearUserPref("ai_max_context_size") }
+)
+
 # Enable GitHub Copilot
 #
 # When enabled, RStudio will use GitHub Copilot to provide code suggestions.

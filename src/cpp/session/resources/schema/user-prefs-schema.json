@@ -1875,6 +1875,42 @@
             "title": "Use pre-release version of Posit Assistant (restart required)",
             "description": "Use a pre-release version of the Posit Assistant for testing purposes. Do not use for production work."
         },
+        "ai_api_key": {
+            "type": "string",
+            "default": "",
+            "title": "AI API key",
+            "description": "API key sent as a Bearer token to the OpenAI-compatible chat endpoint. Leave blank for local providers that do not require a key."
+        },
+        "ai_base_url": {
+            "type": "string",
+            "default": "https://api.openai.com/v1",
+            "title": "AI base URL",
+            "description": "Base URL of the OpenAI-compatible API (the part before /chat/completions), e.g. https://api.openai.com/v1 or http://localhost:11434/v1."
+        },
+        "ai_model": {
+            "type": "string",
+            "default": "gpt-4o",
+            "title": "AI model",
+            "description": "Name of the model to use for chat, e.g. gpt-4o, o4-mini, or a local model name."
+        },
+        "ai_thinking_enabled": {
+            "type": "boolean",
+            "default": false,
+            "title": "Enable thinking",
+            "description": "When enabled, request and display the model's reasoning (sends reasoning_effort and surfaces reasoning output for reasoning-capable models)."
+        },
+        "ai_interleaved_thinking_enabled": {
+            "type": "boolean",
+            "default": false,
+            "title": "Enable interleaved thinking",
+            "description": "When enabled, the model's reasoning is streamed inline with the answer; when disabled, reasoning is shown in a separate collapsed block."
+        },
+        "ai_max_context_size": {
+            "type": "integer",
+            "default": 128000,
+            "title": "Maximum context size",
+            "description": "Maximum context window size, in tokens, used to trim conversation history before sending a request to the AI provider."
+        },
         "copilot_enabled": {
             "type": "boolean",
             "default": false,

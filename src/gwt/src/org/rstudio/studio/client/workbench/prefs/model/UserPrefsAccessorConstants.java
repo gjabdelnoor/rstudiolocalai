@@ -2284,6 +2284,54 @@ public interface UserPrefsAccessorConstants extends Constants {
    String positAssistantTestManifestDescription();
 
    /**
+    * API key sent as a Bearer token to the OpenAI-compatible chat endpoint. Leave blank for local providers that do not require a key.
+    */
+   @DefaultStringValue("AI API key")
+   String aiApiKeyTitle();
+   @DefaultStringValue("API key sent as a Bearer token to the OpenAI-compatible chat endpoint. Leave blank for local providers that do not require a key.")
+   String aiApiKeyDescription();
+
+   /**
+    * Base URL of the OpenAI-compatible API (the part before /chat/completions), e.g. https://api.openai.com/v1 or http://localhost:11434/v1.
+    */
+   @DefaultStringValue("AI base URL")
+   String aiBaseUrlTitle();
+   @DefaultStringValue("Base URL of the OpenAI-compatible API (the part before /chat/completions), e.g. https://api.openai.com/v1 or http://localhost:11434/v1.")
+   String aiBaseUrlDescription();
+
+   /**
+    * Name of the model to use for chat, e.g. gpt-4o, o4-mini, or a local model name.
+    */
+   @DefaultStringValue("AI model")
+   String aiModelTitle();
+   @DefaultStringValue("Name of the model to use for chat, e.g. gpt-4o, o4-mini, or a local model name.")
+   String aiModelDescription();
+
+   /**
+    * When enabled, request and display the model's reasoning (sends reasoning_effort and surfaces reasoning output for reasoning-capable models).
+    */
+   @DefaultStringValue("Enable thinking")
+   String aiThinkingEnabledTitle();
+   @DefaultStringValue("When enabled, request and display the model's reasoning (sends reasoning_effort and surfaces reasoning output for reasoning-capable models).")
+   String aiThinkingEnabledDescription();
+
+   /**
+    * When enabled, the model's reasoning is streamed inline with the answer; when disabled, reasoning is shown in a separate collapsed block.
+    */
+   @DefaultStringValue("Enable interleaved thinking")
+   String aiInterleavedThinkingEnabledTitle();
+   @DefaultStringValue("When enabled, the model's reasoning is streamed inline with the answer; when disabled, reasoning is shown in a separate collapsed block.")
+   String aiInterleavedThinkingEnabledDescription();
+
+   /**
+    * Maximum context window size, in tokens, used to trim conversation history before sending a request to the AI provider.
+    */
+   @DefaultStringValue("Maximum context size")
+   String aiMaxContextSizeTitle();
+   @DefaultStringValue("Maximum context window size, in tokens, used to trim conversation history before sending a request to the AI provider.")
+   String aiMaxContextSizeDescription();
+
+   /**
     * When enabled, RStudio will use GitHub Copilot to provide code suggestions.
     */
    @DefaultStringValue("Enable GitHub Copilot")

@@ -236,16 +236,16 @@
             updateConfiguredUI();
             break;
          case 'thinking':
-            if (activeAssistant) appendThinking(msg.content);
+            if (activeAssistant && msg.requestId === activeRequestId) appendThinking(msg.content);
             break;
          case 'delta':
-            if (activeAssistant) appendDelta(msg.content);
+            if (activeAssistant && msg.requestId === activeRequestId) appendDelta(msg.content);
             break;
          case 'done':
-            commitActive();
+            if (msg.requestId === activeRequestId) commitActive();
             break;
          case 'error':
-            handleError(msg.message);
+            if (!msg.requestId || msg.requestId === activeRequestId) handleError(msg.message);
             break;
       }
    }

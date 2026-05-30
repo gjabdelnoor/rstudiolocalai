@@ -185,6 +185,15 @@ class WebSocketConnection
 
    on(event, fn) { if (this.handlers[event]) this.handlers[event].push(fn); return this; }
 
+   off(event, fn)
+   {
+      const list = this.handlers[event];
+      if (!list) return this;
+      const idx = list.indexOf(fn);
+      if (idx !== -1) list.splice(idx, 1);
+      return this;
+   }
+
    _fireClose()
    {
       if (this.closed) return;
@@ -464,55 +473,57 @@ async function streamCompletion(ws, requestId, history, cfg)
    if (cfg.apiKey) headers['Authorization'] = 'Bearer ' + cfg.apiKey;
 
    const controller = new AbortController();
-   ws.on('close', () => controller.abort());
+   const onClose = () => controller.abort();
+   ws.on('close', onClose);
 
-   let resp;
+   let reader = null;
    try
    {
-      resp = await fetch(url, {
-         method: 'POST',
-         headers,
-         body: JSON.stringify(buildRequestBody(history, cfg)),
-         signal: controller.signal
-      });
-   }
-   catch (e)
-   {
-      ws.sendJSON({ type: 'error', requestId, message: `Request to ${url} failed: ${e.message}` });
-      return;
-   }
+      let resp;
+      try
+      {
+         resp = await fetch(url, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify(buildRequestBody(history, cfg)),
+            signal: controller.signal
+         });
+      }
+      catch (e)
+      {
+         ws.sendJSON({ type: 'error', requestId, message: `Request to ${url} failed: ${e.message}` });
+         return;
+      }
 
-   if (!resp.ok)
-   {
-      let detail = '';
-      try { detail = await resp.text(); } catch (e) { /* ignore */ }
-      ws.sendJSON({ type: 'error', requestId, message: `Provider returned ${resp.status} ${resp.statusText}: ${detail.slice(0, 1000)}` });
-      return;
-   }
+      if (!resp.ok)
+      {
+         let detail = '';
+         try { detail = await resp.text(); } catch (e) { /* ignore */ }
+         ws.sendJSON({ type: 'error', requestId, message: `Provider returned ${resp.status} ${resp.statusText}: ${detail.slice(0, 1000)}` });
+         return;
+      }
 
-   const reader = resp.body.getReader();
-   const decoder = new TextDecoder();
-   let sseBuffer = '';
+      reader = resp.body.getReader();
+      const decoder = new TextDecoder();
+      let sseBuffer = '';
 
-   const dispatchData = (data) =>
-   {
-      if (data === '[DONE]') return false;
-      let json;
-      try { json = JSON.parse(data); } catch (e) { return true; }
-      const choice = json.choices && json.choices[0];
-      if (!choice) return true;
-      const delta = choice.delta || {};
-      // Reasoning content is exposed under different keys by different providers.
-      const reasoning = delta.reasoning_content || delta.reasoning;
-      if (reasoning && cfg.thinking)
-         ws.sendJSON({ type: 'thinking', requestId, content: reasoning });
-      if (typeof delta.content === 'string' && delta.content.length)
-         ws.sendJSON({ type: 'delta', requestId, content: delta.content });
-      return true;
-   };
+      const dispatchData = (data) =>
+      {
+         if (data === '[DONE]') return false;
+         let json;
+         try { json = JSON.parse(data); } catch (e) { return true; }
+         const choice = json.choices && json.choices[0];
+         if (!choice) return true;
+         const delta = choice.delta || {};
+         // Reasoning content is exposed under different keys by different providers.
+         const reasoning = delta.reasoning_content || delta.reasoning;
+         if (reasoning && cfg.thinking)
+            ws.sendJSON({ type: 'thinking', requestId, content: reasoning });
+         if (typeof delta.content === 'string' && delta.content.length)
+            ws.sendJSON({ type: 'delta', requestId, content: delta.content });
+         return true;
+      };
 
-   try
-   {
       for (;;)
       {
          const { value, done } = await reader.read();
@@ -533,15 +544,25 @@ async function streamCompletion(ws, requestId, history, cfg)
             }
          }
       }
+
+      ws.sendJSON({ type: 'done', requestId });
    }
    catch (e)
    {
       if (!controller.signal.aborted)
          ws.sendJSON({ type: 'error', requestId, message: `Stream error: ${e.message}` });
-      return;
    }
-
-   ws.sendJSON({ type: 'done', requestId });
+   finally
+   {
+      // Always detach the per-request close handler (otherwise handlers
+      // accumulate one closure per turn on a long-lived socket), and release
+      // the upstream response body so no socket is left dangling after [DONE].
+      ws.off('close', onClose);
+      if (reader)
+      {
+         try { await reader.cancel(); } catch (e) { /* ignore */ }
+      }
+   }
 }
 
 // ---------------------------------------------------------------------------

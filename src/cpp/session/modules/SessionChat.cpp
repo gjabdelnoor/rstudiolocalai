@@ -4825,6 +4825,23 @@ Error startChatBackend(bool resumeConversation)
    // Pass per-session auth token for WebSocket authentication
    core::system::setenv(&environment, "RSTUDIO_CHAT_AUTH_TOKEN", s_chatBackendAuthToken);
 
+   // Pass the OpenAI-compatible AI configuration from user preferences. The
+   // self-hosted backend (dist/server/main.js) reads these to talk to the
+   // configured provider; no Posit account, sign-in, or telemetry is involved.
+   core::system::setenv(&environment, "RSTUDIO_AI_API_KEY",
+                        prefs::userPrefs().aiApiKey());
+   core::system::setenv(&environment, "RSTUDIO_AI_BASE_URL",
+                        prefs::userPrefs().aiBaseUrl());
+   core::system::setenv(&environment, "RSTUDIO_AI_MODEL",
+                        prefs::userPrefs().aiModel());
+   core::system::setenv(&environment, "RSTUDIO_AI_THINKING",
+                        prefs::userPrefs().aiThinkingEnabled() ? "1" : "0");
+   core::system::setenv(&environment, "RSTUDIO_AI_INTERLEAVED_THINKING",
+                        prefs::userPrefs().aiInterleavedThinkingEnabled() ? "1" : "0");
+   core::system::setenv(&environment, "RSTUDIO_AI_MAX_CONTEXT",
+                        boost::lexical_cast<std::string>(
+                           prefs::userPrefs().aiMaxContextSize()));
+
 #ifdef _WIN32
    // On Windows, R sets HOME to the user's Documents directory rather than
    // %USERPROFILE%. Correct it so child processes (e.g. git) find their

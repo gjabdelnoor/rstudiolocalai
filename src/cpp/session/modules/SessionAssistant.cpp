@@ -2441,25 +2441,8 @@ Error assistantDocFocused(const json::JsonRpcRequest& request,
 Error assistantDidShowCompletion(const json::JsonRpcRequest& request,
                                  json::JsonRpcResponse* pResponse)
 {
-   // Make sure assistant is running
-   if (!ensureAgentRunning())
-   {
-      // nothing to do if we can't connect to the agent
-      return Success();
-   }
-
-   // Read params
-   json::Object completionJson;
-   Error error = core::json::readParams(request.params, &completionJson);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return error;
-   }
-
-   json::Object paramsJson;
-   paramsJson["item"] = completionJson;
-   sendNotification("textDocument/didShowCompletion", paramsJson);
+   // Telemetry removed: RStudio no longer reports which AI completions were
+   // shown to the user. This handler is intentionally a no-op.
    return Success();
 }
 
@@ -2486,27 +2469,8 @@ Error assistantDidAcceptCompletion(const json::JsonRpcRequest& request,
 Error assistantDidAcceptPartialCompletion(const json::JsonRpcRequest& request,
                                           json::JsonRpcResponse* pResponse)
 {
-   // Make sure assistant is running
-   if (!ensureAgentRunning())
-   {
-      // nothing to do if we can't connect to the agent
-      return Success();
-   }
-
-   // Read params
-   json::Object partialCompletionJson;
-   int acceptedLength;
-   Error error = core::json::readParams(request.params, &partialCompletionJson, &acceptedLength);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return error;
-   }
-
-   json::Object paramsJson;
-   paramsJson["item"] = partialCompletionJson;
-   paramsJson["acceptedLength"] = acceptedLength;
-   sendNotification("textDocument/didPartiallyAcceptCompletion", paramsJson);
+   // Telemetry removed: RStudio no longer reports partial acceptance of AI
+   // completions. This handler is intentionally a no-op.
    return Success();
 }
 

@@ -316,6 +316,12 @@ public class UserPrefsAccessor extends Prefs
    public static final String ASSISTANT_SHOW_MESSAGES = "assistant_show_messages";
    public static final String ASSISTANT_TOOLBAR_BUTTON_VISIBLE = "assistant_toolbar_button_visible";
    public static final String POSIT_ASSISTANT_TEST_MANIFEST = "posit_assistant_test_manifest";
+   public static final String AI_API_KEY = "ai_api_key"; // pragma: allowlist secret
+   public static final String AI_BASE_URL = "ai_base_url";
+   public static final String AI_MODEL = "ai_model";
+   public static final String AI_THINKING_ENABLED = "ai_thinking_enabled";
+   public static final String AI_INTERLEAVED_THINKING_ENABLED = "ai_interleaved_thinking_enabled";
+   public static final String AI_MAX_CONTEXT_SIZE = "ai_max_context_size";
    public static final String COPILOT_ENABLED = "copilot_enabled";
    public static final String COPILOT_COMPLETIONS_TRIGGER = "copilot_completions_trigger";
    public static final String COPILOT_COMPLETIONS_DELAY = "copilot_completions_delay";
@@ -4197,6 +4203,78 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * API key sent as a Bearer token to the OpenAI-compatible chat endpoint. Leave blank for local providers that do not require a key.
+    */
+   public PrefValue<String> aiApiKey()
+   {
+      return string(
+         "ai_api_key",
+         _constants.aiApiKeyTitle(), 
+         _constants.aiApiKeyDescription(), 
+         "");
+   }
+
+   /**
+    * Base URL of the OpenAI-compatible API (the part before /chat/completions), e.g. https://api.openai.com/v1 or http://localhost:11434/v1.
+    */
+   public PrefValue<String> aiBaseUrl()
+   {
+      return string(
+         "ai_base_url",
+         _constants.aiBaseUrlTitle(), 
+         _constants.aiBaseUrlDescription(), 
+         "https://api.openai.com/v1");
+   }
+
+   /**
+    * Name of the model to use for chat, e.g. gpt-4o, o4-mini, or a local model name.
+    */
+   public PrefValue<String> aiModel()
+   {
+      return string(
+         "ai_model",
+         _constants.aiModelTitle(), 
+         _constants.aiModelDescription(), 
+         "gpt-4o");
+   }
+
+   /**
+    * When enabled, request and display the model's reasoning (sends reasoning_effort and surfaces reasoning output for reasoning-capable models).
+    */
+   public PrefValue<Boolean> aiThinkingEnabled()
+   {
+      return bool(
+         "ai_thinking_enabled",
+         _constants.aiThinkingEnabledTitle(), 
+         _constants.aiThinkingEnabledDescription(), 
+         false);
+   }
+
+   /**
+    * When enabled, the model's reasoning is streamed inline with the answer; when disabled, reasoning is shown in a separate collapsed block.
+    */
+   public PrefValue<Boolean> aiInterleavedThinkingEnabled()
+   {
+      return bool(
+         "ai_interleaved_thinking_enabled",
+         _constants.aiInterleavedThinkingEnabledTitle(), 
+         _constants.aiInterleavedThinkingEnabledDescription(), 
+         false);
+   }
+
+   /**
+    * Maximum context window size, in tokens, used to trim conversation history before sending a request to the AI provider.
+    */
+   public PrefValue<Integer> aiMaxContextSize()
+   {
+      return integer(
+         "ai_max_context_size",
+         _constants.aiMaxContextSizeTitle(), 
+         _constants.aiMaxContextSizeDescription(), 
+         128000);
+   }
+
+   /**
     * When enabled, RStudio will use GitHub Copilot to provide code suggestions.
     */
    public PrefValue<Boolean> copilotEnabled()
@@ -5022,6 +5100,18 @@ public class UserPrefsAccessor extends Prefs
          assistantToolbarButtonVisible().setValue(layer, source.getBool("assistant_toolbar_button_visible"));
       if (source.hasKey("posit_assistant_test_manifest"))
          positAssistantTestManifest().setValue(layer, source.getBool("posit_assistant_test_manifest"));
+      if (source.hasKey("ai_api_key"))
+         aiApiKey().setValue(layer, source.getString("ai_api_key"));
+      if (source.hasKey("ai_base_url"))
+         aiBaseUrl().setValue(layer, source.getString("ai_base_url"));
+      if (source.hasKey("ai_model"))
+         aiModel().setValue(layer, source.getString("ai_model"));
+      if (source.hasKey("ai_thinking_enabled"))
+         aiThinkingEnabled().setValue(layer, source.getBool("ai_thinking_enabled"));
+      if (source.hasKey("ai_interleaved_thinking_enabled"))
+         aiInterleavedThinkingEnabled().setValue(layer, source.getBool("ai_interleaved_thinking_enabled"));
+      if (source.hasKey("ai_max_context_size"))
+         aiMaxContextSize().setValue(layer, source.getInteger("ai_max_context_size"));
       if (source.hasKey("copilot_enabled"))
          copilotEnabled().setValue(layer, source.getBool("copilot_enabled"));
       if (source.hasKey("copilot_completions_trigger"))
@@ -5334,6 +5424,12 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(assistantShowMessages());
       prefs.add(assistantToolbarButtonVisible());
       prefs.add(positAssistantTestManifest());
+      prefs.add(aiApiKey());
+      prefs.add(aiBaseUrl());
+      prefs.add(aiModel());
+      prefs.add(aiThinkingEnabled());
+      prefs.add(aiInterleavedThinkingEnabled());
+      prefs.add(aiMaxContextSize());
       prefs.add(copilotEnabled());
       prefs.add(copilotCompletionsTrigger());
       prefs.add(copilotCompletionsDelay());

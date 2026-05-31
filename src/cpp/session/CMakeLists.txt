@@ -718,6 +718,15 @@ if(NOT RSTUDIO_SESSION_WIN32 AND NOT RSESSION_ALTERNATE_BUILD)
    install(DIRECTORY "resources/panmirror-scripts"
            DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
 
+   # self-hosted AI backend (OpenAI-compatible); located at runtime via
+   # options().rResourcesPath()/ai-backend by ChatInstallation.cpp
+   install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../../node/ai-backend/dist"
+           DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources/ai-backend)
+   install(FILES
+              "${CMAKE_CURRENT_SOURCE_DIR}/../../node/ai-backend/package.json"
+              "${CMAKE_CURRENT_SOURCE_DIR}/../../node/ai-backend/protocol.json"
+           DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources/ai-backend)
+
    # citation
    configure_file("resources/CITATION.in"
                   "${CMAKE_CURRENT_BINARY_DIR}/CITATION")

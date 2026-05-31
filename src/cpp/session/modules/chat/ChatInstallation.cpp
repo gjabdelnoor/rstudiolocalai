@@ -23,6 +23,8 @@
 #include <core/system/Xdg.hpp>
 #include <shared_core/json/Json.hpp>
 
+#include <session/SessionOptions.hpp>
+
 // Use qualified names for core:: to avoid conflicts with system getenv
 using namespace rstudio::session::modules::chat::constants;
 using namespace rstudio::session::modules::chat::logging;
@@ -63,7 +65,20 @@ core::FilePath locatePositAssistantInstallation()
       }
    }
 
-   // 2. Check user data directory (XDG-based, platform-appropriate)
+   // 2. Check the self-hosted backend bundled with this RStudio build.
+   // This fork ships an OpenAI-compatible backend under the session resources
+   // directory and prefers it over any user/system Posit Assistant install, so
+   // a fresh build uses our backend (no sign-in) without requiring env vars or
+   // a separate install step.
+   core::FilePath bundledAiPath =
+      rstudio::session::options().rResourcesPath().completeChildPath(kBundledAiDirName);
+   if (verifyPositAiInstallation(bundledAiPath))
+   {
+      DLOG("Using bundled AI installation: {}", bundledAiPath.getAbsolutePath());
+      return bundledAiPath;
+   }
+
+   // 3. Check user data directory (XDG-based, platform-appropriate)
    // Linux/macOS: ~/.local/share/rstudio/pai/bin
    // Windows: %LOCALAPPDATA%/rstudio/pai/bin
    core::FilePath userPositAiPath = core::system::xdg::userDataDir().completePath(kPositAiDirName);
@@ -73,7 +88,7 @@ core::FilePath locatePositAssistantInstallation()
       return userPositAiPath;
    }
 
-   // 3. Check system-wide installation (XDG config directory)
+   // 4. Check system-wide installation (XDG config directory)
    // Linux/macOS: /etc/rstudio/pai/bin
    // Windows: C:/ProgramData/rstudio/pai/bin
    core::FilePath systemPositAiPath = core::system::xdg::systemConfigDir().completePath(kPositAiDirName);

@@ -4261,6 +4261,30 @@ void doUpdateCheck()
 // Called during session initialization to check for updates
 Error checkForUpdatesOnStartup()
 {
+   // This fork bundles a self-hosted, OpenAI-compatible backend and never
+   // downloads the proprietary Posit Assistant. Skip the startup manifest
+   // fetch entirely: we must not contact cdn.posit.co, and we must not let a
+   // remote manifest mark our bundled backend as "unsupported" or stop its
+   // agent. Seed a clean, non-blocking update state so the rest of the module
+   // (and the chat UI) treats the bundled backend as healthy and up to date.
+   {
+      boost::mutex::scoped_lock lock(s_updateStateMutex);
+      std::string installedVersion = getInstalledVersion();
+      s_updateState.currentVersion = installedVersion;
+      s_updateState.updateAvailable = false;
+      s_updateState.isDowngrade = false;
+      s_updateState.noCompatibleVersion = false;
+      s_updateState.unsupportedInstalledVersion = false;
+      s_updateState.unsupportedProtocol = false;
+      s_updateState.manifestUnavailable = false;
+      s_updateState.errorMessage.clear();
+      s_updateState.newVersion.clear();
+      s_updateState.downloadUrl.clear();
+   }
+   DLOG("checkForUpdatesOnStartup: self-hosted backend, skipping manifest fetch");
+   return Success();
+
+#if 0
    if (!isPositAssistantWanted())
    {
       DLOG("Update check skipped: posit not selected for chat or assistant");
@@ -4467,6 +4491,7 @@ Error checkForUpdatesOnStartup()
    }
 
    return Success();
+#endif // disabled legacy startup manifest check
 }
 
 // ============================================================================
@@ -5433,6 +5458,7 @@ Error chatInstallUpdateLegacy(const json::JsonRpcRequest& request,
    pResponse->setResult(json::Value());
    return Success();
 }
+#endif // disabled legacy chatInstallUpdate
 
 Error chatGetUpdateStatus(const json::JsonRpcRequest& request,
                           json::JsonRpcResponse* pResponse)

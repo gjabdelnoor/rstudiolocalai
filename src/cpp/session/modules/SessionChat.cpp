@@ -4261,6 +4261,30 @@ void doUpdateCheck()
 // Called during session initialization to check for updates
 Error checkForUpdatesOnStartup()
 {
+   // This fork bundles a self-hosted, OpenAI-compatible backend and never
+   // downloads the proprietary Posit Assistant. Skip the startup manifest
+   // fetch entirely: we must not contact cdn.posit.co, and we must not let a
+   // remote manifest mark our bundled backend as "unsupported" or stop its
+   // agent. Seed a clean, non-blocking update state so the rest of the module
+   // (and the chat UI) treats the bundled backend as healthy and up to date.
+   {
+      boost::mutex::scoped_lock lock(s_updateStateMutex);
+      std::string installedVersion = getInstalledVersion();
+      s_updateState.currentVersion = installedVersion;
+      s_updateState.updateAvailable = false;
+      s_updateState.isDowngrade = false;
+      s_updateState.noCompatibleVersion = false;
+      s_updateState.unsupportedInstalledVersion = false;
+      s_updateState.unsupportedProtocol = false;
+      s_updateState.manifestUnavailable = false;
+      s_updateState.errorMessage.clear();
+      s_updateState.newVersion.clear();
+      s_updateState.downloadUrl.clear();
+   }
+   DLOG("checkForUpdatesOnStartup: self-hosted backend, skipping manifest fetch");
+   return Success();
+
+#if 0
    if (!isPositAssistantWanted())
    {
       DLOG("Update check skipped: posit not selected for chat or assistant");
@@ -4467,6 +4491,7 @@ Error checkForUpdatesOnStartup()
    }
 
    return Success();
+#endif // disabled legacy startup manifest check
 }
 
 // ============================================================================
@@ -4825,6 +4850,23 @@ Error startChatBackend(bool resumeConversation)
    // Pass per-session auth token for WebSocket authentication
    core::system::setenv(&environment, "RSTUDIO_CHAT_AUTH_TOKEN", s_chatBackendAuthToken);
 
+   // Pass the OpenAI-compatible AI configuration from user preferences. The
+   // self-hosted backend (dist/server/main.js) reads these to talk to the
+   // configured provider; no Posit account, sign-in, or telemetry is involved.
+   core::system::setenv(&environment, "RSTUDIO_AI_API_KEY",
+                        prefs::userPrefs().aiApiKey());
+   core::system::setenv(&environment, "RSTUDIO_AI_BASE_URL",
+                        prefs::userPrefs().aiBaseUrl());
+   core::system::setenv(&environment, "RSTUDIO_AI_MODEL",
+                        prefs::userPrefs().aiModel());
+   core::system::setenv(&environment, "RSTUDIO_AI_THINKING",
+                        prefs::userPrefs().aiThinkingEnabled() ? "1" : "0");
+   core::system::setenv(&environment, "RSTUDIO_AI_INTERLEAVED_THINKING",
+                        prefs::userPrefs().aiInterleavedThinkingEnabled() ? "1" : "0");
+   core::system::setenv(&environment, "RSTUDIO_AI_MAX_CONTEXT",
+                        boost::lexical_cast<std::string>(
+                           prefs::userPrefs().aiMaxContextSize()));
+
 #ifdef _WIN32
    // On Windows, R sets HOME to the user's Documents directory rather than
    // %USERPROFILE%. Correct it so child processes (e.g. git) find their
@@ -5118,51 +5160,28 @@ Error chatCheckForUpdates(const json::JsonRpcRequest& request,
       }
    }
 
-   // Check if a forced recheck was requested (e.g. user clicked Retry)
-   bool forceRecheck = false;
-   if (request.params.getSize() > 0)
-   {
-      Error error = json::readParam(request.params, 0, &forceRecheck);
-      if (error)
-         return error;
-   }
+   // This fork bundles a self-hosted, OpenAI-compatible backend and never
+   // downloads the proprietary Posit Assistant. Report "up to date" without
+   // contacting the update manifest, so the bundled backend is never replaced
+   // by a sign-in-bearing build. (The automation override above is preserved
+   // so Playwright update-flow tests still exercise the blocking-shape paths.)
+   std::string installedVersion = getInstalledVersion();
 
-   // Perform on-demand update check if state hasn't been populated yet,
-   // or if the caller explicitly requested a recheck.
-   // This happens when user selects Posit Assistant in Preferences before the pref is saved.
-   // We allow the check regardless of isPositAssistantWanted() since checking for available
-   // updates doesn't require the preference - only actual installation does.
-   {
-      boost::mutex::scoped_lock lock(s_updateStateMutex);
-      if (s_updateState.currentVersion.empty() || forceRecheck)
-      {
-         DLOG("Update state not populated or recheck forced, performing on-demand check");
-         lock.unlock();
-         doUpdateCheck();
-      }
-   }
-
-   boost::mutex::scoped_lock lock(s_updateStateMutex);
-
-   // Return cached/computed check result
    json::Object result;
-   result["updateAvailable"] = s_updateState.updateAvailable;
-   result["isDowngrade"] = s_updateState.isDowngrade;
-   result["noCompatibleVersion"] = s_updateState.noCompatibleVersion;
-   result["unsupportedInstalledVersion"] = s_updateState.unsupportedInstalledVersion;
-   result["unsupportedProtocol"] = s_updateState.unsupportedProtocol;
-   result["manifestUnavailable"] = s_updateState.manifestUnavailable;
-   result["errorMessage"] = s_updateState.errorMessage;
-   result["currentVersion"] = s_updateState.currentVersion;
-   result["newVersion"] = s_updateState.newVersion;
-   result["downloadUrl"] = s_updateState.downloadUrl;
-   result["isInitialInstall"] = (s_updateState.currentVersion == "0.0.0");
+   result["updateAvailable"] = false;
+   result["isDowngrade"] = false;
+   result["noCompatibleVersion"] = false;
+   result["unsupportedInstalledVersion"] = false;
+   result["unsupportedProtocol"] = false;
+   result["manifestUnavailable"] = false;
+   result["errorMessage"] = std::string();
+   result["currentVersion"] = installedVersion;
+   result["newVersion"] = std::string();
+   result["downloadUrl"] = std::string();
+   result["isInitialInstall"] = installedVersion.empty();
 
-   DLOG("chatCheckForUpdates returning: updateAvailable={}, noCompatibleVersion={}, "
-        "unsupportedVersion={}, unsupportedProtocol={}, manifestUnavailable={}",
-        s_updateState.updateAvailable, s_updateState.noCompatibleVersion,
-        s_updateState.unsupportedInstalledVersion, s_updateState.unsupportedProtocol,
-        s_updateState.manifestUnavailable);
+   DLOG("chatCheckForUpdates: self-hosted backend, reporting up-to-date "
+        "(installedVersion={})", installedVersion);
 
    pResponse->setResult(result);
    return Success();
@@ -5209,6 +5228,27 @@ Error chatSetUpdateCheckOverride(const json::JsonRpcRequest& request,
 }
 
 Error chatInstallUpdate(const json::JsonRpcRequest& request,
+                        json::JsonRpcResponse* pResponse)
+{
+   // This fork bundles a self-hosted, OpenAI-compatible backend and never
+   // downloads the proprietary Posit Assistant. chatCheckForUpdates always
+   // reports "up to date", so the UI never offers an install; guard the RPC
+   // directly as well so a direct/automation call can't fetch the manifest or
+   // download a proprietary, sign-in-bearing package.
+   {
+      boost::mutex::scoped_lock lock(s_updateStateMutex);
+      s_updateState.installStatus = UpdateState::Status::Idle;
+      s_updateState.installMessage.clear();
+   }
+   DLOG("chatInstallUpdate: self-hosted backend, no proprietary download");
+   pResponse->setResult(json::Value());
+   return Success();
+}
+
+// Retained for reference; no longer reachable now that chatInstallUpdate
+// short-circuits above. Kept compiled out to avoid -Werror unused warnings.
+#if 0
+Error chatInstallUpdateLegacy(const json::JsonRpcRequest& request,
                         json::JsonRpcResponse* pResponse)
 {
    if (!isPositAssistantWanted())
@@ -5418,6 +5458,7 @@ Error chatInstallUpdate(const json::JsonRpcRequest& request,
    pResponse->setResult(json::Value());
    return Success();
 }
+#endif // disabled legacy chatInstallUpdate
 
 Error chatGetUpdateStatus(const json::JsonRpcRequest& request,
                           json::JsonRpcResponse* pResponse)

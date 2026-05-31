@@ -3560,6 +3560,84 @@ core::Error UserPrefValues::setPositAssistantTestManifest(bool val)
 }
 
 /**
+ * API key sent as a Bearer token to the OpenAI-compatible chat endpoint. Leave blank for local providers that do not require a key.
+ */
+std::string UserPrefValues::aiApiKey()
+{
+   return readPref<std::string>("ai_api_key");
+}
+
+core::Error UserPrefValues::setAiApiKey(std::string val)
+{
+   return writePref("ai_api_key", val);
+}
+
+/**
+ * Base URL of the OpenAI-compatible API (the part before /chat/completions), e.g. https://api.openai.com/v1 or http://localhost:11434/v1.
+ */
+std::string UserPrefValues::aiBaseUrl()
+{
+   return readPref<std::string>("ai_base_url");
+}
+
+core::Error UserPrefValues::setAiBaseUrl(std::string val)
+{
+   return writePref("ai_base_url", val);
+}
+
+/**
+ * Name of the model to use for chat, e.g. gpt-4o, o4-mini, or a local model name.
+ */
+std::string UserPrefValues::aiModel()
+{
+   return readPref<std::string>("ai_model");
+}
+
+core::Error UserPrefValues::setAiModel(std::string val)
+{
+   return writePref("ai_model", val);
+}
+
+/**
+ * When enabled, request and display the model's reasoning (sends reasoning_effort and surfaces reasoning output for reasoning-capable models).
+ */
+bool UserPrefValues::aiThinkingEnabled()
+{
+   return readPref<bool>("ai_thinking_enabled");
+}
+
+core::Error UserPrefValues::setAiThinkingEnabled(bool val)
+{
+   return writePref("ai_thinking_enabled", val);
+}
+
+/**
+ * When enabled, the model's reasoning is streamed inline with the answer; when disabled, reasoning is shown in a separate collapsed block.
+ */
+bool UserPrefValues::aiInterleavedThinkingEnabled()
+{
+   return readPref<bool>("ai_interleaved_thinking_enabled");
+}
+
+core::Error UserPrefValues::setAiInterleavedThinkingEnabled(bool val)
+{
+   return writePref("ai_interleaved_thinking_enabled", val);
+}
+
+/**
+ * Maximum context window size, in tokens, used to trim conversation history before sending a request to the AI provider.
+ */
+int UserPrefValues::aiMaxContextSize()
+{
+   return readPref<int>("ai_max_context_size");
+}
+
+core::Error UserPrefValues::setAiMaxContextSize(int val)
+{
+   return writePref("ai_max_context_size", val);
+}
+
+/**
  * When enabled, RStudio will use GitHub Copilot to provide code suggestions.
  */
 bool UserPrefValues::copilotEnabled()
@@ -4068,6 +4146,12 @@ std::vector<std::string> UserPrefValues::allKeys()
       kAssistantShowMessages,
       kAssistantToolbarButtonVisible,
       kPositAssistantTestManifest,
+      kAiApiKey,
+      kAiBaseUrl,
+      kAiModel,
+      kAiThinkingEnabled,
+      kAiInterleavedThinkingEnabled,
+      kAiMaxContextSize,
       kCopilotEnabled,
       kCopilotCompletionsTrigger,
       kCopilotCompletionsDelay,

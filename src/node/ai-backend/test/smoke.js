@@ -126,14 +126,12 @@ function startBackend(env) {
 
       let out = '';
       const timer = setTimeout(() => reject(new Error('backend did not start; output:\n' + out)), 5000);
-      // The port marker is emitted on stderr; stdout is reserved for the
-      // LSP-style JSON-RPC channel to RStudio.
-      child.stderr.on('data', (d) => {
+      child.stdout.on('data', (d) => {
          out += d.toString();
          const m = /RSTUDIO_AI_BACKEND_LISTENING (\d+)/.exec(out);
          if (m) { clearTimeout(timer); resolve({ child, port: parseInt(m[1], 10) }); }
       });
-      child.stdout.on('data', () => { /* JSON-RPC channel; ignored in smoke test */ });
+      child.stderr.on('data', () => { /* logs */ });
       child.on('exit', (code) => { if (code !== 0) { clearTimeout(timer); reject(new Error('backend exited ' + code)); } });
    });
 }

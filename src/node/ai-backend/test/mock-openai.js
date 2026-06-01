@@ -5,6 +5,14 @@
  * backend without a real provider. Streams a canned reply (and, when the
  * request includes reasoning_effort, a reasoning delta) as Server-Sent Events.
  *
+ * Two modes:
+ *   - default: streams opts.reply word-by-word (plus a reasoning delta when
+ *     the request asked for reasoning_effort).
+ *   - scripted: opts.script is an array of turns consumed one per request, so
+ *     the agent tool-loop can be driven deterministically. Each turn is either
+ *       { toolCall: { id?, name, arguments } }   -> emit a tool call
+ *       { content: 'text' }                      -> stream assistant text
+ *
  * Usable as a module (startMockServer) or standalone (node mock-openai.js).
  */
 'use strict';
@@ -13,6 +21,8 @@ const http = require('http');
 
 function startMockServer(opts) {
    opts = opts || {};
+   let turnIndex = 0;
+   const requests = []; // captured request bodies, for assertions
    return new Promise((resolve) => {
       const server = http.createServer((req, res) => {
          if (req.method !== 'POST' || !req.url.endsWith('/chat/completions')) {
@@ -23,6 +33,7 @@ function startMockServer(opts) {
          req.on('end', () => {
             let parsed = {};
             try { parsed = JSON.parse(body); } catch (e) { /* ignore */ }
+            requests.push(parsed);
 
             // Allow tests to force an error response.
             if (parsed.model === 'force-error') {
@@ -37,37 +48,64 @@ function startMockServer(opts) {
                'Connection': 'keep-alive'
             });
 
+            const model = parsed.model || 'mock';
             const send = (obj) => res.write('data: ' + JSON.stringify(obj) + '\n\n');
-            const mkDelta = (delta) => ({
+            const mkChunk = (delta, finish) => ({
                id: 'chatcmpl-mock', object: 'chat.completion.chunk',
-               model: parsed.model || 'mock', choices: [{ index: 0, delta: delta, finish_reason: null }]
+               model, choices: [{ index: 0, delta: delta, finish_reason: finish || null }]
             });
+            const streamWords = (text, done) => {
+               const words = String(text || '').split(' ');
+               let i = 0;
+               const tick = () => {
+                  if (i < words.length) {
+                     const word = words[i] + (i < words.length - 1 ? ' ' : '');
+                     send(mkChunk({ content: word }));
+                     i++;
+                     setTimeout(tick, 3);
+                  } else {
+                     if (done) done();
+                     res.write('data: [DONE]\n\n');
+                     res.end();
+                  }
+               };
+               tick();
+            };
 
-            // Reasoning first (only if the client asked for it).
-            if (parsed.reasoning_effort) {
-               send(mkDelta({ reasoning_content: 'Let me think about that. ' }));
-            }
-
-            const reply = (opts.reply || 'Hello from the mock model!').split(' ');
-            let i = 0;
-            const tick = () => {
-               if (i < reply.length) {
-                  const word = reply[i] + (i < reply.length - 1 ? ' ' : '');
-                  send(mkDelta({ content: word }));
-                  i++;
-                  setTimeout(tick, 5);
-               } else {
+            // Scripted mode: consume one turn per request.
+            if (Array.isArray(opts.script)) {
+               const turn = opts.script[Math.min(turnIndex, opts.script.length - 1)];
+               turnIndex++;
+               if (turn && turn.toolCall) {
+                  const tc = turn.toolCall;
+                  const args = typeof tc.arguments === 'string'
+                     ? tc.arguments : JSON.stringify(tc.arguments || {});
+                  send(mkChunk({
+                     tool_calls: [{
+                        index: 0, id: tc.id || ('call_' + turnIndex), type: 'function',
+                        function: { name: tc.name, arguments: args }
+                     }]
+                  }));
+                  send(mkChunk({}, 'tool_calls'));
                   res.write('data: [DONE]\n\n');
                   res.end();
+                  return;
                }
-            };
-            tick();
+               streamWords((turn && turn.content) || '');
+               return;
+            }
+
+            // Default mode: optional reasoning, then the canned reply.
+            if (parsed.reasoning_effort) {
+               send(mkChunk({ reasoning_content: 'Let me think about that. ' }));
+            }
+            streamWords(opts.reply || 'Hello from the mock model!');
          });
       });
 
       server.listen(opts.port || 0, '127.0.0.1', () => {
          const port = server.address().port;
-         resolve({ url: `http://127.0.0.1:${port}/v1`, port, close: () => server.close() });
+         resolve({ url: `http://127.0.0.1:${port}/v1`, port, requests, close: () => server.close() });
       });
    });
 }

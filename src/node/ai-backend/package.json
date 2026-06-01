@@ -8,7 +8,9 @@
   "main": "dist/server/main.js",
   "scripts": {
     "start": "node dist/server/main.js",
-    "test": "node test/smoke.js"
+    "test": "node test/smoke.js && node test/agent.js",
+    "test:smoke": "node test/smoke.js",
+    "test:agent": "node test/agent.js"
   },
   "engines": {
     "node": ">=18"

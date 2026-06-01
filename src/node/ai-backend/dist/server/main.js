@@ -309,6 +309,236 @@ function formatRStudioContext(ctx)
 }
 
 // ---------------------------------------------------------------------------
+// Pi-style agent loop: tools the model can call to drive the R session.
+//
+// Modeled on the Pi coding agent (github.com/earendil-works/pi), whose agent
+// gives the model a small set of tools (read / write / edit / bash) and loops
+// until the model stops calling them. Here the tools are mapped onto RStudio's
+// live R kernel instead of the filesystem:
+//
+//   run_r_code     - execute R in the user's session (the "bash" analog)
+//   inspect_data   - read-only structure/preview of an object or data frame
+//   read_workspace - list global-environment variables and open files
+//
+// Tools are only offered to the model when RStudio is connected on the
+// JSON-RPC channel (so they can actually run); standalone/test chat stays a
+// plain completion unless a peer answers runtime/executeCode.
+// ---------------------------------------------------------------------------
+
+const MAX_TOOL_ITERATIONS = 8;
+
+const R_TOOLS = [
+   {
+      type: 'function',
+      function: {
+         name: 'run_r_code',
+         description:
+            'Execute R code in the user\'s live R session and return console output. ' +
+            'Use for computation, data manipulation, fitting models, plotting, and ' +
+            'loading or transforming data frames. Destructive operations (deleting ' +
+            'files, clearing the workspace, shell commands, installing packages, ' +
+            'writing to disk or databases) require explicit user confirmation, so ' +
+            'prefer non-destructive code and explain side effects.',
+         parameters: {
+            type: 'object',
+            properties: {
+               code: { type: 'string', description: 'The R code to execute.' }
+            },
+            required: ['code']
+         }
+      }
+   },
+   {
+      type: 'function',
+      function: {
+         name: 'inspect_data',
+         description:
+            'Inspect an existing R object or data frame: its structure (str), ' +
+            'dimensions, and the first rows (head). Read-only and always safe.',
+         parameters: {
+            type: 'object',
+            properties: {
+               name: { type: 'string', description: 'Name of the R object/data frame to inspect.' }
+            },
+            required: ['name']
+         }
+      }
+   },
+   {
+      type: 'function',
+      function: {
+         name: 'read_workspace',
+         description:
+            'List the variables in the R global environment and the files open in ' +
+            'the editor. Read-only; use it to discover what data is available.',
+         parameters: { type: 'object', properties: {} }
+      }
+   }
+];
+
+// Classify R code for destructive side effects.
+// Returns { level: 'allow' | 'confirm' | 'block', reason }.
+//   block   - never run automatically (catastrophic / irreversible system harm)
+//   confirm - run only after the user approves in the UI
+//   allow   - run immediately
+function classifyRCode(code)
+{
+   const c = String(code || '');
+
+   const blockPatterns = [
+      { re: /system2?\s*\(\s*["'`][^"'`]*\brm\s+-[rf]/i, reason: 'shell "rm -rf"' },
+      { re: /unlink\s*\([^)]*recursive\s*=\s*(?:T|TRUE)\b/i, reason: 'recursive unlink() (mass file deletion)' },
+      { re: /system2?\s*\(\s*["'`]\s*(?:sudo|mkfs|dd|shutdown|reboot|:\s*\(\s*\)\s*\{)/i, reason: 'dangerous shell command' }
+   ];
+   for (const p of blockPatterns)
+      if (p.re.test(c)) return { level: 'block', reason: p.reason };
+
+   const confirmPatterns = [
+      { re: /\bunlink\s*\(/, reason: 'deletes files (unlink)' },
+      { re: /\bfile\.remove\s*\(/, reason: 'deletes files (file.remove)' },
+      { re: /\bfile\.rename\s*\(/, reason: 'renames or moves files' },
+      { re: /\brm\s*\(\s*list\s*=\s*ls\s*\(/, reason: 'clears the entire R workspace' },
+      { re: /\bsystem2?\s*\(/, reason: 'runs a shell command' },
+      { re: /\bshell\s*\(/, reason: 'runs a shell command' },
+      { re: /\binstall\.packages\s*\(/, reason: 'installs packages' },
+      { re: /\bremove\.packages\s*\(/, reason: 'removes packages' },
+      { re: /\b(?:write\.csv|write\.csv2|write\.table|writeLines|saveRDS|save|fwrite|write_csv|write_rds|ggsave)\s*\(/, reason: 'writes files to disk' },
+      { re: /\bdownload\.file\s*\(/, reason: 'downloads from the network' },
+      { re: /\b(?:dbExecute|dbSendStatement|dbRemoveTable|dbWriteTable)\s*\(/, reason: 'modifies a database' },
+      { re: /\b(?:DROP|DELETE|TRUNCATE)\s+(?:TABLE|FROM|INTO|DATABASE)?/i, reason: 'destructive SQL statement' },
+      { re: /\b(?:q|quit)\s*\(/, reason: 'quits the R session' },
+      { re: /\bsetwd\s*\(/, reason: 'changes the working directory' }
+   ];
+   for (const p of confirmPatterns)
+      if (p.re.test(c)) return { level: 'confirm', reason: p.reason };
+
+   return { level: 'allow', reason: '' };
+}
+
+// A valid R identifier (used to guard inspect_data against code injection).
+const R_IDENTIFIER = /^[a-zA-Z.][a-zA-Z0-9._]*$/;
+
+// Ask the client to approve a destructive tool call. Resolves true/false.
+// Pending requests are tracked per-connection on ws.pendingConfirms and
+// resolved when the client sends a matching { type: 'confirmResponse' }.
+function requestConfirmation(ws, requestId, callId, tool, code, reason)
+{
+   return new Promise((resolve) =>
+   {
+      const timer = setTimeout(() =>
+      {
+         if (ws.pendingConfirms && ws.pendingConfirms.has(callId))
+         {
+            ws.pendingConfirms.delete(callId);
+            resolve(false); // default-deny on timeout
+         }
+      }, 120000);
+      ws.pendingConfirms.set(callId, { resolve, timer });
+      ws.sendJSON({ type: 'confirmRequired', requestId, callId, tool, code, reason });
+   });
+}
+
+// Render a runtime/executeCode result into text for the model.
+function formatExecResult(res)
+{
+   if (res == null) return '(no output)';
+   if (typeof res === 'string') return res || '(no output)';
+   const parts = [];
+   if (res.output) parts.push(String(res.output));
+   if (res.error) parts.push('Error: ' + String(res.error));
+   if (!parts.length && res.result !== undefined) parts.push(String(res.result));
+   return parts.length ? parts.join('\n') : '(no output)';
+}
+
+// Execute a single tool call (with guardrails) and return a string result
+// to feed back to the model. Streams toolCall/toolResult events to the client.
+async function executeToolCall(ws, requestId, call)
+{
+   const name = call.function && call.function.name;
+   let args = {};
+   try { args = JSON.parse((call.function && call.function.arguments) || '{}'); }
+   catch (e) { return `Could not parse tool arguments: ${e.message}`; }
+
+   if (name === 'run_r_code')
+   {
+      const code = typeof args.code === 'string' ? args.code : '';
+      if (!code.trim()) return 'No code was provided.';
+
+      const verdict = classifyRCode(code);
+      if (verdict.level === 'block')
+      {
+         ws.sendJSON({ type: 'toolResult', requestId, callId: call.id, tool: name, ok: false, blocked: true, reason: verdict.reason });
+         return `BLOCKED by the safety policy: ${verdict.reason}. The code was NOT executed. Do not retry this; propose a safer approach.`;
+      }
+      if (verdict.level === 'confirm')
+      {
+         const approved = await requestConfirmation(ws, requestId, call.id, name, code, verdict.reason);
+         if (!approved)
+         {
+            ws.sendJSON({ type: 'toolResult', requestId, callId: call.id, tool: name, ok: false, denied: true, reason: verdict.reason });
+            return `The user DECLINED to run this code (${verdict.reason}). It was NOT executed. Suggest a safer alternative or ask how to proceed.`;
+         }
+      }
+
+      ws.sendJSON({ type: 'toolCall', requestId, callId: call.id, tool: name, code });
+      try
+      {
+         const res = await callRStudio('runtime/executeCode', { code }, 120000);
+         const out = formatExecResult(res);
+         ws.sendJSON({ type: 'toolResult', requestId, callId: call.id, tool: name, ok: true });
+         return out.slice(0, 16000);
+      }
+      catch (e)
+      {
+         ws.sendJSON({ type: 'toolResult', requestId, callId: call.id, tool: name, ok: false, message: e.message });
+         return `Execution failed: ${e.message}`;
+      }
+   }
+
+   if (name === 'inspect_data')
+   {
+      const objName = typeof args.name === 'string' ? args.name.trim() : '';
+      if (!R_IDENTIFIER.test(objName))
+         return `'${objName}' is not a valid R object name.`;
+      ws.sendJSON({ type: 'toolCall', requestId, callId: call.id, tool: name, target: objName });
+      const probe =
+         `cat("class:", paste(class(${objName}), collapse=', '), "\\n"); ` +
+         `if (is.data.frame(${objName})) cat("dim:", paste(dim(${objName}), collapse=' x '), "\\n"); ` +
+         `cat("--- str ---\\n"); utils::str(${objName}); ` +
+         `cat("--- head ---\\n"); print(utils::head(${objName}))`;
+      try
+      {
+         const res = await callRStudio('runtime/executeCode', { code: probe }, 30000);
+         ws.sendJSON({ type: 'toolResult', requestId, callId: call.id, tool: name, ok: true });
+         return formatExecResult(res).slice(0, 16000);
+      }
+      catch (e)
+      {
+         ws.sendJSON({ type: 'toolResult', requestId, callId: call.id, tool: name, ok: false, message: e.message });
+         return `Could not inspect '${objName}': ${e.message}`;
+      }
+   }
+
+   if (name === 'read_workspace')
+   {
+      ws.sendJSON({ type: 'toolCall', requestId, callId: call.id, tool: name });
+      try
+      {
+         const ctx = await callRStudio('runtime/getDetailedContext', {}, 8000);
+         ws.sendJSON({ type: 'toolResult', requestId, callId: call.id, tool: name, ok: true });
+         return formatRStudioContext(ctx) || '(empty workspace)';
+      }
+      catch (e)
+      {
+         ws.sendJSON({ type: 'toolResult', requestId, callId: call.id, tool: name, ok: false, message: e.message });
+         return `Could not read workspace: ${e.message}`;
+      }
+   }
+
+   return `Unknown tool: ${name}`;
+}
+
+// ---------------------------------------------------------------------------
 // Minimal WebSocket server (RFC 6455), no external dependencies
 // ---------------------------------------------------------------------------
 
@@ -635,11 +865,11 @@ function buildMessages(history, cfg, contextStr)
    return [system, ...kept];
 }
 
-function buildRequestBody(history, cfg, contextStr)
+function buildRequestBody(messages, cfg, tools)
 {
    const body = {
       model: cfg.model,
-      messages: buildMessages(history, cfg, contextStr),
+      messages,
       stream: true
    };
    if (cfg.thinking)
@@ -648,39 +878,25 @@ function buildRequestBody(history, cfg, contextStr)
       // OpenAI-compatible servers. Harmless hint for others.
       body.reasoning_effort = 'medium';
    }
+   if (tools && tools.length)
+   {
+      body.tools = tools;
+      body.tool_choice = 'auto';
+   }
    return body;
 }
 
-// Stream a completion to the given WebSocket connection.
-async function streamCompletion(ws, requestId, history, cfg)
+// Run a single provider turn: stream text/thinking deltas to the client and
+// assemble any tool calls the model emits. Does NOT send a 'done' event --
+// the caller decides whether the agent loop continues (tool calls) or ends.
+// Returns { assistantText, toolCalls, error }.
+async function runProviderTurn(ws, requestId, messages, cfg, tools, controller)
 {
-   // Fetch RStudio context (open files, R workspace, cursor position).
-   // Only attempt this when RStudio is actually connected; otherwise we would
-   // block on a request that never gets answered. Fail gracefully either way
-   // -- missing context is better than a broken chat.
-   let contextStr = null;
-   if (rstudioConnected)
-   {
-      try
-      {
-         const ctx = await callRStudio('runtime/getDetailedContext', {}, 4000);
-         contextStr = formatRStudioContext(ctx);
-      }
-      catch (e)
-      {
-         log('DEBUG', `Could not fetch RStudio context: ${e.message}`);
-      }
-   }
-
    const url = cfg.baseUrl + '/chat/completions';
    const headers = { 'Content-Type': 'application/json' };
    if (cfg.apiKey) headers['Authorization'] = 'Bearer ' + cfg.apiKey;
 
-   const controller = new AbortController();
-   const onClose = () => controller.abort();
-   ws.on('close', onClose);
-
-   // Per-request streaming state for filtering embedded <thinking> XML tags.
+   // Per-turn streaming state for filtering embedded <thinking> XML tags.
    // Some OpenAI-compatible providers (e.g. Claude via LiteLLM without tag
    // stripping) include thinking in <thinking>...</thinking> blocks within
    // delta.content instead of delta.reasoning_content.
@@ -750,6 +966,9 @@ async function streamCompletion(ws, requestId, history, cfg)
       return { text: textOut, thinking: thinkingOut };
    }
 
+   let assistantText = '';
+   const toolCallsAcc = [];
+
    let reader = null;
    try
    {
@@ -759,14 +978,14 @@ async function streamCompletion(ws, requestId, history, cfg)
          resp = await fetch(url, {
             method: 'POST',
             headers,
-            body: JSON.stringify(buildRequestBody(history, cfg, contextStr)),
+            body: JSON.stringify(buildRequestBody(messages, cfg, tools)),
             signal: controller.signal
          });
       }
       catch (e)
       {
          ws.sendJSON({ type: 'error', requestId, message: `Request to ${url} failed: ${e.message}` });
-         return;
+         return { error: true, toolCalls: [] };
       }
 
       if (!resp.ok)
@@ -774,16 +993,17 @@ async function streamCompletion(ws, requestId, history, cfg)
          let detail = '';
          try { detail = await resp.text(); } catch (e) { /* ignore */ }
          ws.sendJSON({ type: 'error', requestId, message: `Provider returned ${resp.status} ${resp.statusText}: ${detail.slice(0, 1000)}` });
-         return;
+         return { error: true, toolCalls: [] };
       }
 
       reader = resp.body.getReader();
       const decoder = new TextDecoder();
       let sseBuffer = '';
+      let sawDone = false;
 
       const dispatchData = (data) =>
       {
-         if (data === '[DONE]') return false;
+         if (data === '[DONE]') { sawDone = true; return false; }
          let json;
          try { json = JSON.parse(data); } catch (e) { return true; }
          const choice = json.choices && json.choices[0];
@@ -801,7 +1021,31 @@ async function streamCompletion(ws, requestId, history, cfg)
             if (thinking)
                ws.sendJSON({ type: 'thinking', requestId, content: thinking });
             if (text)
+            {
+               assistantText += text;
                ws.sendJSON({ type: 'delta', requestId, content: text });
+            }
+         }
+
+         // Assemble streamed tool calls (OpenAI sends them in fragments keyed
+         // by index: id/name arrive first, arguments stream in pieces).
+         if (Array.isArray(delta.tool_calls))
+         {
+            for (const d of delta.tool_calls)
+            {
+               const idx = typeof d.index === 'number' ? d.index : 0;
+               if (!toolCallsAcc[idx])
+                  toolCallsAcc[idx] = { id: '', type: 'function', function: { name: '', arguments: '' } };
+               const slot = toolCallsAcc[idx];
+               if (d.id) slot.id = d.id;
+               if (d.type) slot.type = d.type;
+               if (d.function)
+               {
+                  if (d.function.name) slot.function.name += d.function.name;
+                  if (typeof d.function.arguments === 'string')
+                     slot.function.arguments += d.function.arguments;
+               }
+            }
          }
          return true;
       };
@@ -822,28 +1066,102 @@ async function streamCompletion(ws, requestId, history, cfg)
             if (line.startsWith('data:'))
             {
                const data = line.slice(5).trim();
-               if (!dispatchData(data)) { ws.sendJSON({ type: 'done', requestId }); return; }
+               if (!dispatchData(data)) break;
             }
          }
+         if (sawDone) break;
       }
 
-      ws.sendJSON({ type: 'done', requestId });
+      const toolCalls = toolCallsAcc.filter((t) => t && t.function && t.function.name);
+      for (const t of toolCalls) if (!t.id) t.id = 'call_' + (rpcIdCounter++);
+      return { assistantText, toolCalls };
    }
    catch (e)
    {
       if (!controller.signal.aborted)
          ws.sendJSON({ type: 'error', requestId, message: `Stream error: ${e.message}` });
+      return { error: true, toolCalls: [] };
    }
    finally
    {
-      // Always detach the per-request close handler (otherwise handlers
-      // accumulate one closure per turn on a long-lived socket), and release
-      // the upstream response body so no socket is left dangling after [DONE].
-      ws.off('close', onClose);
+      // Release the upstream response body so no socket is left dangling.
       if (reader)
       {
          try { await reader.cancel(); } catch (e) { /* ignore */ }
       }
+   }
+}
+
+// Drive a full agent turn: fetch context, then loop provider turns and tool
+// executions (Pi-style) until the model stops calling tools or we hit the cap.
+async function streamCompletion(ws, requestId, history, cfg)
+{
+   // Fetch RStudio context (open files, R workspace, cursor position).
+   // Only attempt this when RStudio is actually connected; otherwise we would
+   // block on a request that never gets answered. Fail gracefully either way
+   // -- missing context is better than a broken chat.
+   let contextStr = null;
+   if (rstudioConnected)
+   {
+      try
+      {
+         const ctx = await callRStudio('runtime/getDetailedContext', {}, 4000);
+         contextStr = formatRStudioContext(ctx);
+      }
+      catch (e)
+      {
+         log('DEBUG', `Could not fetch RStudio context: ${e.message}`);
+      }
+   }
+
+   // Tools can only run when RStudio is connected to execute them. Without a
+   // peer, fall back to plain chat (preserves standalone/test behavior).
+   const tools = rstudioConnected ? R_TOOLS : null;
+   const messages = buildMessages(history, cfg, contextStr);
+
+   const controller = new AbortController();
+   const onClose = () => controller.abort();
+   ws.on('close', onClose);
+
+   try
+   {
+      for (let iter = 0; iter < MAX_TOOL_ITERATIONS; iter++)
+      {
+         const turn = await runProviderTurn(ws, requestId, messages, cfg, tools, controller);
+         if (turn.error) return;                 // error already reported to client
+         if (controller.signal.aborted) return;  // socket closed mid-turn
+
+         if (!turn.toolCalls.length)
+         {
+            ws.sendJSON({ type: 'done', requestId });
+            return;
+         }
+
+         // Record the assistant's tool-call message, then run each tool and
+         // feed its result back as a tool message for the next turn.
+         messages.push({ role: 'assistant', content: turn.assistantText || null, tool_calls: turn.toolCalls });
+         for (const call of turn.toolCalls)
+         {
+            const result = await executeToolCall(ws, requestId, call);
+            messages.push({ role: 'tool', tool_call_id: call.id, content: result });
+            if (controller.signal.aborted) return;
+         }
+      }
+
+      // Safety valve: don't loop forever if the model keeps calling tools.
+      ws.sendJSON({ type: 'delta', requestId, content: '\n\n_(Reached the tool-call limit; stopping here.)_' });
+      ws.sendJSON({ type: 'done', requestId });
+   }
+   catch (e)
+   {
+      if (!controller.signal.aborted)
+         ws.sendJSON({ type: 'error', requestId, message: `Agent error: ${e.message}` });
+   }
+   finally
+   {
+      // Detach the per-request close handler (otherwise handlers accumulate
+      // one closure per turn on a long-lived socket).
+      ws.off('close', onClose);
    }
 }
 
@@ -854,6 +1172,9 @@ async function streamCompletion(ws, requestId, history, cfg)
 function handleConnection(ws)
 {
    const cfg = loadConfig(); // re-read per connection so pref changes take effect
+
+   // Outstanding destructive-action confirmations, keyed by tool-call id.
+   ws.pendingConfirms = new Map();
 
    ws.sendJSON({
       type: 'ready',
@@ -872,6 +1193,19 @@ function handleConnection(ws)
       catch (e) { ws.sendJSON({ type: 'error', message: 'Invalid JSON' }); return; }
 
       if (msg.type === 'ping') { ws.sendJSON({ type: 'pong' }); return; }
+
+      // User's approve/deny decision for a guarded (destructive) tool call.
+      if (msg.type === 'confirmResponse')
+      {
+         const pending = ws.pendingConfirms.get(msg.callId);
+         if (pending)
+         {
+            ws.pendingConfirms.delete(msg.callId);
+            clearTimeout(pending.timer);
+            pending.resolve(!!msg.approved);
+         }
+         return;
+      }
 
       if (msg.type === 'chat')
       {

@@ -26,7 +26,8 @@ dist/
     style.css
 test/
   mock-openai.js         # an OpenAI-compatible mock server
-  smoke.js               # end-to-end test (no external dependencies)
+  smoke.js               # end-to-end chat/streaming test
+  agent.js               # end-to-end agent tool-loop + guardrails test
 ```
 
 The backend is intentionally **dependency-free** -- it uses only Node.js
@@ -58,6 +59,53 @@ reasoning-capable models; harmless otherwise). **Interleaved thinking**
 controls whether that reasoning streams inline (on) or in a collapsed
 "Reasoning" block (off).
 
+## Agent tool-loop (R kernel access)
+
+Modeled on the [Pi coding agent](https://github.com/earendil-works/pi), the
+backend runs a tool-calling loop that lets the model drive the live R session.
+When RStudio is connected on the JSON-RPC channel (see below), the model is
+offered three tools and the backend loops -- streaming text, running the tools,
+feeding results back -- until the model stops calling them (capped at 8 rounds):
+
+| Tool | Purpose | Guarded |
+| --- | --- | --- |
+| `run_r_code` | Execute R in the user's session (compute, transform, load/inspect data frames) | yes |
+| `inspect_data` | Read-only `str()`/`dim()`/`head()` of an object or data frame | no |
+| `read_workspace` | List global-environment variables and open editor files | no |
+
+### Destructive-action guardrails
+
+Before any `run_r_code` runs, the code is classified:
+
+- **block** -- catastrophic, irreversible system harm (e.g. `system("rm -rf ...")`,
+  recursive `unlink(..., recursive = TRUE)`). Never executed; the model is told
+  it was blocked.
+- **confirm** -- destructive but legitimate (deleting/renaming/writing files,
+  `rm(list = ls())`, shell commands, `install.packages`, destructive SQL,
+  `download.file`, quitting R, `setwd`). The backend emits a `confirmRequired`
+  event and waits for the user's `confirmResponse` (default-deny after 120s)
+  before running.
+- **allow** -- everything else runs immediately.
+
+### RStudio JSON-RPC channel
+
+Tools are executed by calling RStudio over an LSP-style (Content-Length framed)
+JSON-RPC channel on the process's **stdin/stdout** (stdout is reserved for this;
+logs and the port marker go to stderr). RStudio must answer these methods:
+
+| Method | Direction | Result |
+| --- | --- | --- |
+| `runtime/getDetailedContext` | backend -> RStudio | session info, open files, workspace variables |
+| `runtime/executeCode` | backend -> RStudio | `{ output, error }` from running R code |
+| `workspace/insertAtCursor` | backend -> RStudio | `{ success }` |
+| `workspace/insertIntoNewFile` | backend -> RStudio | `{ success }` |
+
+The backend treats RStudio as connected once it receives any valid framed
+message on stdin (the client initializes first), and degrades gracefully to
+plain chat when no peer is present. **`runtime/executeCode` is the one method
+the RStudio C++ session side still needs to implement** for live execution;
+everything else (the loop, guardrails, protocol) is complete and tested here.
+
 ## Using it with RStudio
 
 RStudio locates the backend in this order:
@@ -86,10 +134,12 @@ node dist/server/main.js -h 127.0.0.1 -p 8765
 # then open http://127.0.0.1:8765/ in a browser
 ```
 
-Run the end-to-end smoke test (starts a mock provider, launches the backend,
-drives a real WebSocket session):
+Run the end-to-end tests (each starts a mock provider, launches the backend,
+and drives a real WebSocket session; `agent.js` also attaches a fake RStudio
+JSON-RPC peer to exercise the tool-loop and guardrails):
 
 ```sh
-node test/smoke.js
-# or: npm test
+node test/smoke.js     # chat + streaming
+node test/agent.js     # agent tool-loop + destructive-action guardrails
+# or run both: npm test
 ```

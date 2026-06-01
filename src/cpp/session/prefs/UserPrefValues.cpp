@@ -3637,6 +3637,162 @@ core::Error UserPrefValues::setAiMaxContextSize(int val)
    return writePref("ai_max_context_size", val);
 }
 
+// ============================================================================
+// Local model configuration
+// ============================================================================
+
+std::string UserPrefValues::aiLocalBaseUrl()
+{
+   return readPref<std::string>("ai_local_base_url");
+}
+
+core::Error UserPrefValues::setAiLocalBaseUrl(std::string val)
+{
+   return writePref("ai_local_base_url", val);
+}
+
+std::string UserPrefValues::aiLocalModel()
+{
+   return readPref<std::string>("ai_local_model");
+}
+
+core::Error UserPrefValues::setAiLocalModel(std::string val)
+{
+   return writePref("ai_local_model", val);
+}
+
+std::string UserPrefValues::aiLocalApiKey()
+{
+   return readPref<std::string>("ai_local_api_key");
+}
+
+core::Error UserPrefValues::setAiLocalApiKey(std::string val)
+{
+   return writePref("ai_local_api_key", val);
+}
+
+bool UserPrefValues::aiLocalAutoDiscover()
+{
+   return readPref<bool>("ai_local_auto_discover");
+}
+
+core::Error UserPrefValues::setAiLocalAutoDiscover(bool val)
+{
+   return writePref("ai_local_auto_discover", val);
+}
+
+std::string UserPrefValues::aiLocalAutoDiscoverProvider()
+{
+   return readPref<std::string>("ai_local_auto_discover_provider");
+}
+
+core::Error UserPrefValues::setAiLocalAutoDiscoverProvider(std::string val)
+{
+   return writePref("ai_local_auto_discover_provider", val);
+}
+
+// ============================================================================
+// Cloud model configuration
+// ============================================================================
+
+std::string UserPrefValues::aiCloudBaseUrl()
+{
+   return readPref<std::string>("ai_cloud_base_url");
+}
+
+core::Error UserPrefValues::setAiCloudBaseUrl(std::string val)
+{
+   return writePref("ai_cloud_base_url", val);
+}
+
+std::string UserPrefValues::aiCloudModel()
+{
+   return readPref<std::string>("ai_cloud_model");
+}
+
+core::Error UserPrefValues::setAiCloudModel(std::string val)
+{
+   return writePref("ai_cloud_model", val);
+}
+
+std::string UserPrefValues::aiCloudApiKey()
+{
+   return readPref<std::string>("ai_cloud_api_key");
+}
+
+core::Error UserPrefValues::setAiCloudApiKey(std::string val)
+{
+   return writePref("ai_cloud_api_key", val);
+}
+
+// ============================================================================
+// Active provider selection
+// ============================================================================
+
+std::string UserPrefValues::aiActiveProvider()
+{
+   return readPref<std::string>("ai_active_provider");
+}
+
+core::Error UserPrefValues::setAiActiveProvider(std::string val)
+{
+   return writePref("ai_active_provider", val);
+}
+
+// ============================================================================
+// Pi Agent configuration
+// ============================================================================
+
+std::string UserPrefValues::piProvider()
+{
+   return readPref<std::string>("pi_provider");
+}
+
+core::Error UserPrefValues::setPiProvider(std::string val)
+{
+   return writePref("pi_provider", val);
+}
+
+std::string UserPrefValues::piModel()
+{
+   return readPref<std::string>("pi_model");
+}
+
+core::Error UserPrefValues::setPiModel(std::string val)
+{
+   return writePref("pi_model", val);
+}
+
+std::string UserPrefValues::piApiKey()
+{
+   return readPref<std::string>("pi_api_key");
+}
+
+core::Error UserPrefValues::setPiApiKey(std::string val)
+{
+   return writePref("pi_api_key", val);
+}
+
+std::string UserPrefValues::piBaseUrl()
+{
+   return readPref<std::string>("pi_base_url");
+}
+
+core::Error UserPrefValues::setPiBaseUrl(std::string val)
+{
+   return writePref("pi_base_url", val);
+}
+
+std::string UserPrefValues::piThinkingLevel()
+{
+   return readPref<std::string>("pi_thinking_level");
+}
+
+core::Error UserPrefValues::setPiThinkingLevel(std::string val)
+{
+   return writePref("pi_thinking_level", val);
+}
+
 /**
  * When enabled, RStudio will use GitHub Copilot to provide code suggestions.
  */

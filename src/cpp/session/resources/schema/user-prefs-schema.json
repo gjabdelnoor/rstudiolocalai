@@ -1805,11 +1805,11 @@
         },
         "chat_provider": {
             "type": "string",
-            "enum": ["none", "posit"],
-            "enumReadable": ["(None)", "Posit Assistant"],
-            "default": "posit",
+            "enum": ["none", "local", "cloud"],
+            "enumReadable": ["(None)", "Local Model", "Cloud Model"],
+            "default": "local",
             "title": "Chat Provider",
-            "description": "Select which AI assistant to use for chat functionality."
+            "description": "Select which AI assistant to use for chat functionality. The Pi Agent backend supports all providers Pi Agent itself supports (Anthropic, OpenAI, Google, Ollama, Azure, Bedrock, OpenRouter, ...)."
         },
         "assistant_completions_trigger": {
             "type": "string",
@@ -1907,9 +1907,99 @@
         },
         "ai_max_context_size": {
             "type": "integer",
-            "default": 128000,
+            "default": 1000000,
             "title": "Maximum context size",
             "description": "Maximum context window size, in tokens, used to trim conversation history before sending a request to the AI provider."
+        },
+        "ai_local_base_url": {
+            "type": "string",
+            "default": "http://localhost:11434/v1",
+            "title": "Local model base URL",
+            "description": "Base URL for local OpenAI-compatible API (Ollama, LM Studio, etc.), e.g. http://localhost:11434/v1"
+        },
+        "ai_local_model": {
+            "type": "string",
+            "default": "llama3.2",
+            "title": "Local model name",
+            "description": "Name of the local model to use, e.g. llama3.2, mistral, codellama. Make sure this model is installed in your local provider."
+        },
+        "ai_local_api_key": {
+            "type": "string",
+            "default": "",
+            "title": "Local model API key",
+            "description": "API key for local provider if required (usually blank for Ollama)."
+        },
+        "ai_local_auto_discover": {
+            "type": "boolean",
+            "default": true,
+            "title": "Auto-discover loaded model",
+            "description": "When enabled, automatically detect the currently running model from LM Studio, llama.cpp, or Ollama on startup. Disable to use a manually configured model."
+        },
+        "ai_local_auto_discover_provider": {
+            "type": "string",
+            "enum": ["auto", "lmstudio", "llamacpp", "ollama"],
+            "enumReadable": ["Auto (detect)", "LM Studio", "llama.cpp / llama-server", "Ollama"],
+            "default": "auto",
+            "title": "Auto-discover provider",
+            "description": "Which local provider to auto-discover from. 'Auto' will try LM Studio, llama.cpp, then Ollama."
+        },
+        "ai_cloud_base_url": {
+            "type": "string",
+            "default": "https://api.openai.com/v1",
+            "title": "Cloud model base URL",
+            "description": "Base URL for cloud OpenAI-compatible API, e.g. https://api.openai.com/v1, https://api.anthropic.com/v1, https://openrouter.ai/v1"
+        },
+        "ai_cloud_model": {
+            "type": "string",
+            "default": "gpt-4o",
+            "title": "Cloud model name",
+            "description": "Name of the cloud model to use, e.g. gpt-4o, claude-3-5-sonnet, gemini-pro"
+        },
+        "ai_cloud_api_key": {
+            "type": "string",
+            "default": "",
+            "title": "Cloud model API key",
+            "description": "API key for cloud provider. Leave blank if using OpenRouter or other keyless endpoints."
+        },
+        "ai_active_provider": {
+            "type": "string",
+            "enum": ["local", "cloud"],
+            "enumReadable": ["Local Model", "Cloud Model"],
+            "default": "cloud",
+            "title": "Active AI provider",
+            "description": "Select which AI provider configuration to use for chat. The Pi Agent backend supports all providers Pi Agent itself supports (Anthropic, OpenAI, Google, Ollama, Azure, Bedrock, OpenRouter, ...)."
+        },
+        "pi_provider": {
+            "type": "string",
+            "default": "",
+            "title": "Pi Agent provider",
+            "description": "Pi Agent provider name (anthropic, openai, google, ollama, ...). Leave blank to use the Pi Agent default for the active provider class (ollama for 'Local Model', anthropic for 'Cloud Model'). Pi Agent also reads standard provider env vars (ANTHROPIC_API_KEY, OPENAI_API_KEY, etc.) directly."
+        },
+        "pi_model": {
+            "type": "string",
+            "default": "claude-sonnet-4-20250514",
+            "title": "Pi Agent model",
+            "description": "Pi Agent model ID. Examples: 'claude-sonnet-4-20250514' (Anthropic), 'gpt-4o' (OpenAI), 'gemini-2.5-pro' (Google), 'llama3.2' (Ollama). Use the exact model name your provider expects."
+        },
+        "pi_api_key": {
+            "type": "string",
+            "default": "",
+            "title": "Pi Agent API key",
+            "description": "API key for the Pi Agent provider. Optional if you've set the provider's standard env var (e.g. ANTHROPIC_API_KEY) in your environment."
+        },
+        "pi_base_url": {
+            "type": "string",
+            "default": "",
+            "title": "Pi Agent base URL",
+            "description": "Override the provider's base URL. Useful for self-hosted / local providers (Ollama, vLLM, LM Studio) and for proxies."
+        },
+        "pi_thinking_level": {
+            "type": "string",
+            "enum": ["off", "minimal", "low", "medium", "high", "xhigh"],
+            "enumReadable": ["Off", "Minimal", "Low", "Medium", "High", "Extra High"],
+            "default": "medium",
+            "title": "Pi Agent thinking level",
+            "description": "How much reasoning the model should do. 'off' disables thinking entirely. 'high' and 'xhigh' produce the most careful reasoning at the cost of latency and tokens. Only takes effect when the chosen model supports thinking."
         },
         "copilot_enabled": {
             "type": "boolean",

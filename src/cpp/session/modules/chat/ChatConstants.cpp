@@ -33,8 +33,11 @@ const char* const kIndexFileName = "index.html";
 const char* const kCspConfigPath = "dist/csp.json";
 const char* const kProtocolVersionFileName = "protocol.json";
 
-// Protocol Version (SUPPORTED_PROTOCOL_VERSION)
-const char* const kProtocolVersion = "10.0";
+// Protocol Version (SUPPORTED_PROTOCOL_VERSION).
+// 10.0: original OpenAI-compatible bridge (now retired).
+// 11.0: Pi Agent bridge. The backend is a Pi Agent host (with custom R
+//       tools) rather than an OpenAI chat-completions proxy.
+const char* const kProtocolVersion = "11.0";
 
 // Capabilities: JSON-RPC methods that RStudio handles
 const std::vector<std::string>& rstudioCapabilities()

@@ -470,6 +470,32 @@ namespace prefs {
 #define kAiThinkingEnabled "ai_thinking_enabled"
 #define kAiInterleavedThinkingEnabled "ai_interleaved_thinking_enabled"
 #define kAiMaxContextSize "ai_max_context_size"
+#define kAiLocalBaseUrl "ai_local_base_url"
+#define kAiLocalModel "ai_local_model"
+#define kAiLocalApiKey "ai_local_api_key"
+#define kAiLocalAutoDiscover "ai_local_auto_discover"
+#define kAiLocalAutoDiscoverProvider "ai_local_auto_discover_provider"
+#define kAiLocalAutoDiscoverProviderAuto "auto"
+#define kAiLocalAutoDiscoverProviderLmStudio "lmstudio"
+#define kAiLocalAutoDiscoverProviderLlamaCpp "llamacpp"
+#define kAiLocalAutoDiscoverProviderOllama "ollama"
+#define kAiCloudBaseUrl "ai_cloud_base_url"
+#define kAiCloudModel "ai_cloud_model"
+#define kAiCloudApiKey "ai_cloud_api_key"
+#define kAiActiveProvider "ai_active_provider"
+#define kAiActiveProviderLocal "local"
+#define kAiActiveProviderCloud "cloud"
+#define kPiProvider "pi_provider"
+#define kPiModel "pi_model"
+#define kPiApiKey "pi_api_key"
+#define kPiBaseUrl "pi_base_url"
+#define kPiThinkingLevel "pi_thinking_level"
+#define kPiThinkingLevelOff "off"
+#define kPiThinkingLevelMinimal "minimal"
+#define kPiThinkingLevelLow "low"
+#define kPiThinkingLevelMedium "medium"
+#define kPiThinkingLevelHigh "high"
+#define kPiThinkingLevelXhigh "xhigh"
 #define kCopilotEnabled "copilot_enabled"
 #define kCopilotCompletionsTrigger "copilot_completions_trigger"
 #define kCopilotCompletionsTriggerAuto "auto"
@@ -2174,6 +2200,43 @@ public:
     */
    int aiMaxContextSize();
    core::Error setAiMaxContextSize(int val);
+
+   // Local model configuration
+   std::string aiLocalBaseUrl();
+   core::Error setAiLocalBaseUrl(std::string val);
+   std::string aiLocalModel();
+   core::Error setAiLocalModel(std::string val);
+   std::string aiLocalApiKey();
+   core::Error setAiLocalApiKey(std::string val);
+   bool aiLocalAutoDiscover();
+   core::Error setAiLocalAutoDiscover(bool val);
+   std::string aiLocalAutoDiscoverProvider();
+   core::Error setAiLocalAutoDiscoverProvider(std::string val);
+
+   // Cloud model configuration
+   std::string aiCloudBaseUrl();
+   core::Error setAiCloudBaseUrl(std::string val);
+   std::string aiCloudModel();
+   core::Error setAiCloudModel(std::string val);
+   std::string aiCloudApiKey();
+   core::Error setAiCloudApiKey(std::string val);
+
+   // Active provider selection
+   std::string aiActiveProvider();
+   core::Error setAiActiveProvider(std::string val);
+
+   // Pi Agent configuration (consumed by the Pi Agent backend in
+   // src/node/ai-backend/dist/server/main.js; see SessionChat.cpp:4833+).
+   std::string piProvider();
+   core::Error setPiProvider(std::string val);
+   std::string piModel();
+   core::Error setPiModel(std::string val);
+   std::string piApiKey();
+   core::Error setPiApiKey(std::string val);
+   std::string piBaseUrl();
+   core::Error setPiBaseUrl(std::string val);
+   std::string piThinkingLevel();
+   core::Error setPiThinkingLevel(std::string val);
 
    /**
     * When enabled, RStudio will use GitHub Copilot to provide code suggestions.

@@ -1,16 +1,21 @@
 {
   "name": "rstudio-ai-backend",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
-  "description": "Self-hosted, OpenAI-compatible chat backend for the RStudio AI pane. Replaces the proprietary Posit Assistant backend; no account or sign-in required.",
+  "description": "RStudio AI backend powered by the Pi coding agent. Bridges the RStudio chat UI to a Pi Agent session with R kernel tools. Replaces the OpenAI-compatible bridge; no Posit account, sign-in, or telemetry is involved.",
   "license": "AGPL-3.0",
   "type": "commonjs",
   "main": "dist/server/main.js",
   "scripts": {
     "start": "node dist/server/main.js",
-    "test": "node test/smoke.js"
+    "test": "node test/smoke.js",
+    "postinstall": "echo 'Pi Agent installed. The Pi binary is at ./node_modules/.bin/pi'"
   },
   "engines": {
     "node": ">=18"
+  },
+  "dependencies": {
+    "@earendil-works/pi-coding-agent": "^0.78.0",
+    "typebox": "^1.1.38"
   }
 }

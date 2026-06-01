@@ -1,3 +1,5 @@
 {
-  "protocol": "10.0"
+  "protocol": "11.0",
+  "backend": "pi-agent",
+  "description": "RStudio AI backend powered by the Pi coding agent. The backend hosts a Pi Agent session in-process and exposes a curated set of R tools that talk to the live R kernel via JSON-RPC 2.0 over stdio. The chat client UI speaks the same WebSocket protocol as the prior OpenAI bridge (ready/chat/delta/thinking/done/error), plus a new 'confirmation-request' message for destructive-operation guardrails."
 }

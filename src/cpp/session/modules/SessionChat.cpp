@@ -4850,22 +4850,76 @@ Error startChatBackend(bool resumeConversation)
    // Pass per-session auth token for WebSocket authentication
    core::system::setenv(&environment, "RSTUDIO_CHAT_AUTH_TOKEN", s_chatBackendAuthToken);
 
-   // Pass the OpenAI-compatible AI configuration from user preferences. The
-   // self-hosted backend (dist/server/main.js) reads these to talk to the
-   // configured provider; no Posit account, sign-in, or telemetry is involved.
-   core::system::setenv(&environment, "RSTUDIO_AI_API_KEY",
-                        prefs::userPrefs().aiApiKey());
-   core::system::setenv(&environment, "RSTUDIO_AI_BASE_URL",
-                        prefs::userPrefs().aiBaseUrl());
-   core::system::setenv(&environment, "RSTUDIO_AI_MODEL",
-                        prefs::userPrefs().aiModel());
-   core::system::setenv(&environment, "RSTUDIO_AI_THINKING",
-                        prefs::userPrefs().aiThinkingEnabled() ? "1" : "0");
-   core::system::setenv(&environment, "RSTUDIO_AI_INTERLEAVED_THINKING",
-                        prefs::userPrefs().aiInterleavedThinkingEnabled() ? "1" : "0");
-   core::system::setenv(&environment, "RSTUDIO_AI_MAX_CONTEXT",
-                        boost::lexical_cast<std::string>(
-                           prefs::userPrefs().aiMaxContextSize()));
+   // ========================================================================
+   // Pi Agent configuration
+   // ========================================================================
+   // The backend (dist/server/main.js) is now a thin bridge that hosts a Pi
+   // Agent session (https://github.com/earendil-works/pi-mono) and exposes a
+   // curated set of R tools that talk to the live R kernel via JSON-RPC 2.0
+   // over stdio. There is no longer any "OpenAI-compatible provider" -- Pi
+   // Agent handles provider abstraction natively (Anthropic, OpenAI, Google,
+   // Ollama, Azure, Bedrock, OpenRouter, ...). The user supplies the LLM via
+   // standard Pi env vars (ANTHROPIC_API_KEY, OPENAI_API_KEY, ...) or via the
+   // RSTUDIO_PI_* overrides below.
+   //
+   // We deliberately drop the previous OpenAI-compatible bridge and the
+   // auto-discovery machinery: the agent's only way to reach the outside
+   // world is through the R tools, and Pi Agent is its own LLM client.
+
+   // Map the previous "active provider" choice onto a Pi Agent provider
+   // name. This keeps the GWT preferences pane's "Local / Cloud" radio
+   // buttons functional, but it's purely cosmetic -- Pi Agent will work
+   // with whatever provider the user configures separately.
+   std::string activeProvider = prefs::userPrefs().aiActiveProvider();
+   std::string piProvider;
+   if (activeProvider == "local")
+      piProvider = "ollama";                 // sensible default for local installs
+   else
+      piProvider = "anthropic";              // sensible default for cloud installs
+
+   // Honor user-set provider / model / thinking / api-key prefs. Falls back
+   // to Pi Agent's own env vars (ANTHROPIC_API_KEY etc.) if the user has not
+   // configured anything here.
+   if (!prefs::userPrefs().piProvider().empty())
+      piProvider = prefs::userPrefs().piProvider();
+   std::string piModel = prefs::userPrefs().piModel();
+   if (piModel.empty())
+      piModel = "claude-sonnet-4-20250514";
+
+   std::string piApiKey = prefs::userPrefs().piApiKey();
+   std::string piBaseUrl = prefs::userPrefs().piBaseUrl();
+
+   // Thinking level: Pi Agent accepts off|minimal|low|medium|high|xhigh.
+   // Map the previous "thinking enabled" boolean to a default level.
+   std::string piThinking = "off";
+   if (prefs::userPrefs().aiThinkingEnabled())
+      piThinking = prefs::userPrefs().piThinkingLevel();   // "low"/"medium"/"high"
+   if (piThinking.empty())
+      piThinking = "medium";
+
+   core::system::setenv(&environment, "RSTUDIO_PI_PROVIDER", piProvider);
+   core::system::setenv(&environment, "RSTUDIO_PI_MODEL",    piModel);
+   core::system::setenv(&environment, "RSTUDIO_PI_THINKING", piThinking);
+   if (!piApiKey.empty())
+      core::system::setenv(&environment, "RSTUDIO_PI_API_KEY", piApiKey);
+   if (!piBaseUrl.empty())
+      core::system::setenv(&environment, "RSTUDIO_PI_BASE_URL", piBaseUrl);
+
+   // Workspace (R session's CWD) -- used by Pi as the agent's working dir.
+   core::system::setenv(&environment, "RSTUDIO_PI_WORKSPACE",
+                        dirs::getInitialWorkingDirectory().getAbsolutePath());
+
+   // Unset the legacy OpenAI-compatible env vars so the new backend can't
+   // accidentally fall back to them.
+   core::system::unsetenv(&environment, "RSTUDIO_AI_API_KEY");
+   core::system::unsetenv(&environment, "RSTUDIO_AI_BASE_URL");
+   core::system::unsetenv(&environment, "RSTUDIO_AI_MODEL");
+   core::system::unsetenv(&environment, "RSTUDIO_AI_THINKING");
+   core::system::unsetenv(&environment, "RSTUDIO_AI_INTERLEAVED_THINKING");
+   core::system::unsetenv(&environment, "RSTUDIO_AI_MAX_CONTEXT");
+   core::system::unsetenv(&environment, "RSTUDIO_AI_PROVIDER");
+   core::system::unsetenv(&environment, "RSTUDIO_AI_AUTO_DISCOVER");
+   core::system::unsetenv(&environment, "RSTUDIO_AI_AUTO_DISCOVER_PROVIDER");
 
 #ifdef _WIN32
    // On Windows, R sets HOME to the user's Documents directory rather than

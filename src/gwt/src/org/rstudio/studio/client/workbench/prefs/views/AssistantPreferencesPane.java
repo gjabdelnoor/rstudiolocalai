@@ -55,6 +55,7 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.PrefsConstants;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
+import org.rstudio.core.client.widget.FormLabel;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessorConstants;
 import org.rstudio.studio.client.workbench.views.chat.PaiUtil;
 import org.rstudio.studio.client.workbench.views.chat.PositAiInstallManager;
@@ -79,8 +80,11 @@ import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.PasswordTextBox;
 import com.google.gwt.user.client.ui.SimplePanel;
+import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
+import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
 
@@ -104,6 +108,22 @@ public class AssistantPreferencesPane extends PreferencesPane
             selectedAssistant.equals(UserPrefsAccessor.ASSISTANT_COPILOT));
       prefs.copilotTabKeyBehavior().setGlobalValue(selAssistantTabKeyBehavior_.getValue());
       prefs.copilotCompletionsTrigger().setGlobalValue(selAssistantCompletionsTrigger_.getValue());
+
+      // Save custom provider settings
+      prefs.aiProvider1Name().setGlobalValue(tbAiProvider1Name_.getText().trim());
+      prefs.aiProvider1BaseUrl().setGlobalValue(tbAiProvider1BaseUrl_.getText().trim());
+      prefs.aiProvider1ApiKey().setGlobalValue(tbAiProvider1ApiKey_.getText());
+      prefs.aiProvider1Model().setGlobalValue(tbAiProvider1Model_.getText().trim());
+
+      prefs.aiProvider2Name().setGlobalValue(tbAiProvider2Name_.getText().trim());
+      prefs.aiProvider2BaseUrl().setGlobalValue(tbAiProvider2BaseUrl_.getText().trim());
+      prefs.aiProvider2ApiKey().setGlobalValue(tbAiProvider2ApiKey_.getText());
+      prefs.aiProvider2Model().setGlobalValue(tbAiProvider2Model_.getText().trim());
+
+      prefs.aiProvider3Name().setGlobalValue(tbAiProvider3Name_.getText().trim());
+      prefs.aiProvider3BaseUrl().setGlobalValue(tbAiProvider3BaseUrl_.getText().trim());
+      prefs.aiProvider3ApiKey().setGlobalValue(tbAiProvider3ApiKey_.getText());
+      prefs.aiProvider3Model().setGlobalValue(tbAiProvider3Model_.getText().trim());
 
       return super.onApply(prefs);
    }
@@ -266,27 +286,39 @@ public class AssistantPreferencesPane extends PreferencesPane
       cbAssistantNesCollapse_.setValue(!prefs_.assistantNesAutoshow().getGlobalValue());
       cbAssistantNesCollapse_.setTitle(constants_.assistantNesCollapseDescription());
 
-      // Create chat provider selector - conditionally include Posit Assistant option
+      // Create chat provider selector - include Posit Assistant and 3 custom providers
       String[] chatProviderLabels;
       String[] chatProviderValues;
       if (paiEnabled)
       {
          chatProviderLabels = new String[] {
                prefsConstants_.chatProviderEnum_none(),
-               prefsConstants_.chatProviderEnum_posit()
+               prefsConstants_.chatProviderEnum_posit(),
+               prefsConstants_.chatProviderEnum_custom_1(),
+               prefsConstants_.chatProviderEnum_custom_2(),
+               prefsConstants_.chatProviderEnum_custom_3()
          };
          chatProviderValues = new String[] {
                UserPrefsAccessor.CHAT_PROVIDER_NONE,
-               UserPrefsAccessor.CHAT_PROVIDER_POSIT
+               UserPrefsAccessor.CHAT_PROVIDER_POSIT,
+               UserPrefsAccessor.CHAT_PROVIDER_CUSTOM_1,
+               UserPrefsAccessor.CHAT_PROVIDER_CUSTOM_2,
+               UserPrefsAccessor.CHAT_PROVIDER_CUSTOM_3
          };
       }
       else
       {
          chatProviderLabels = new String[] {
-               prefsConstants_.chatProviderEnum_none()
+               prefsConstants_.chatProviderEnum_none(),
+               prefsConstants_.chatProviderEnum_custom_1(),
+               prefsConstants_.chatProviderEnum_custom_2(),
+               prefsConstants_.chatProviderEnum_custom_3()
          };
          chatProviderValues = new String[] {
-               UserPrefsAccessor.CHAT_PROVIDER_NONE
+               UserPrefsAccessor.CHAT_PROVIDER_NONE,
+               UserPrefsAccessor.CHAT_PROVIDER_CUSTOM_1,
+               UserPrefsAccessor.CHAT_PROVIDER_CUSTOM_2,
+               UserPrefsAccessor.CHAT_PROVIDER_CUSTOM_3
          };
       }
       selChatProvider_ = new SelectWidget(
@@ -297,6 +329,63 @@ public class AssistantPreferencesPane extends PreferencesPane
             true,
             false);
       selChatProvider_.setValue(prefs_.chatProvider().getGlobalValue());
+
+      // Custom provider 1 configuration
+      tbAiProvider1Name_ = new TextBox();
+      tbAiProvider1Name_.setWidth("200px");
+      tbAiProvider1Name_.setText(prefs_.aiProvider1Name().getGlobalValue());
+      tbAiProvider1BaseUrl_ = new TextBox();
+      tbAiProvider1BaseUrl_.setWidth("380px");
+      tbAiProvider1BaseUrl_.setText(prefs_.aiProvider1BaseUrl().getGlobalValue());
+      tbAiProvider1ApiKey_ = new PasswordTextBox();
+      tbAiProvider1ApiKey_.setWidth("380px");
+      tbAiProvider1ApiKey_.setText(prefs_.aiProvider1ApiKey().getGlobalValue());
+      tbAiProvider1Model_ = new TextBox();
+      tbAiProvider1Model_.setWidth("260px");
+      tbAiProvider1Model_.setText(prefs_.aiProvider1Model().getGlobalValue());
+      nvwAiProvider1ContextWindow_ = numericPref(
+            prefs_.aiProvider1ContextWindow().getTitle(),
+            1,
+            1000000,
+            prefs_.aiProvider1ContextWindow());
+
+      // Custom provider 2 configuration
+      tbAiProvider2Name_ = new TextBox();
+      tbAiProvider2Name_.setWidth("200px");
+      tbAiProvider2Name_.setText(prefs_.aiProvider2Name().getGlobalValue());
+      tbAiProvider2BaseUrl_ = new TextBox();
+      tbAiProvider2BaseUrl_.setWidth("380px");
+      tbAiProvider2BaseUrl_.setText(prefs_.aiProvider2BaseUrl().getGlobalValue());
+      tbAiProvider2ApiKey_ = new PasswordTextBox();
+      tbAiProvider2ApiKey_.setWidth("380px");
+      tbAiProvider2ApiKey_.setText(prefs_.aiProvider2ApiKey().getGlobalValue());
+      tbAiProvider2Model_ = new TextBox();
+      tbAiProvider2Model_.setWidth("260px");
+      tbAiProvider2Model_.setText(prefs_.aiProvider2Model().getGlobalValue());
+      nvwAiProvider2ContextWindow_ = numericPref(
+            prefs_.aiProvider2ContextWindow().getTitle(),
+            1,
+            1000000,
+            prefs_.aiProvider2ContextWindow());
+
+      // Custom provider 3 configuration
+      tbAiProvider3Name_ = new TextBox();
+      tbAiProvider3Name_.setWidth("200px");
+      tbAiProvider3Name_.setText(prefs_.aiProvider3Name().getGlobalValue());
+      tbAiProvider3BaseUrl_ = new TextBox();
+      tbAiProvider3BaseUrl_.setWidth("380px");
+      tbAiProvider3BaseUrl_.setText(prefs_.aiProvider3BaseUrl().getGlobalValue());
+      tbAiProvider3ApiKey_ = new PasswordTextBox();
+      tbAiProvider3ApiKey_.setWidth("380px");
+      tbAiProvider3ApiKey_.setText(prefs_.aiProvider3ApiKey().getGlobalValue());
+      tbAiProvider3Model_ = new TextBox();
+      tbAiProvider3Model_.setWidth("260px");
+      tbAiProvider3Model_.setText(prefs_.aiProvider3Model().getGlobalValue());
+      nvwAiProvider3ContextWindow_ = numericPref(
+            prefs_.aiProvider3ContextWindow().getTitle(),
+            1,
+            1000000,
+            prefs_.aiProvider3ContextWindow());
 
       linkCopilotTos_ = new HelpLink(
             constants_.copilotTermsOfServiceLinkLabel(),
@@ -339,7 +428,21 @@ public class AssistantPreferencesPane extends PreferencesPane
       add(headerLabel(constants_.assistantChatTab()));
       add(selChatProvider_);
 
-      // Add change handler for chat provider to check for Posit Assistant installation
+      // Custom provider configuration panels (shown/hidden based on selection)
+      final VerticalPanel customProvider1Panel_ = createCustomProvider1Panel();
+      final VerticalPanel customProvider2Panel_ = createCustomProvider2Panel();
+      final VerticalPanel customProvider3Panel_ = createCustomProvider3Panel();
+      add(customProvider1Panel_);
+      add(customProvider2Panel_);
+      add(customProvider3Panel_);
+
+      // Show the correct panel based on initial selection
+      String initialProvider = selChatProvider_.getValue();
+      customProvider1Panel_.setVisible(initialProvider.equals(UserPrefsAccessor.CHAT_PROVIDER_CUSTOM_1));
+      customProvider2Panel_.setVisible(initialProvider.equals(UserPrefsAccessor.CHAT_PROVIDER_CUSTOM_2));
+      customProvider3Panel_.setVisible(initialProvider.equals(UserPrefsAccessor.CHAT_PROVIDER_CUSTOM_3));
+
+      // Add change handler for chat provider
       selChatProvider_.addChangeHandler((event) ->
       {
          String value = selChatProvider_.getValue();
@@ -348,6 +451,9 @@ public class AssistantPreferencesPane extends PreferencesPane
             // Check for install/update/unsupported status
             checkPositAssistantInstallation(/* forAssistant= */ false);
          }
+         customProvider1Panel_.setVisible(value.equals(UserPrefsAccessor.CHAT_PROVIDER_CUSTOM_1));
+         customProvider2Panel_.setVisible(value.equals(UserPrefsAccessor.CHAT_PROVIDER_CUSTOM_2));
+         customProvider3Panel_.setVisible(value.equals(UserPrefsAccessor.CHAT_PROVIDER_CUSTOM_3));
       });
 
       add(cbAssistantToolbarButtonVisible_);
@@ -564,6 +670,42 @@ public class AssistantPreferencesPane extends PreferencesPane
       VerticalPanel panel = new VerticalPanel();
       panel.add(spacedBefore(headerLabel(constants_.otherCaption())));
       panel.add(cbAssistantShowMessages_);
+      return panel;
+   }
+
+   private VerticalPanel createCustomProvider1Panel()
+   {
+      VerticalPanel panel = new VerticalPanel();
+      panel.add(spacedBefore(headerLabel("Custom Provider 1")));
+      panel.add(labeledInput(prefs_.aiProvider1Name().getTitle(), tbAiProvider1Name_));
+      panel.add(labeledInput(prefs_.aiProvider1BaseUrl().getTitle(), tbAiProvider1BaseUrl_));
+      panel.add(labeledInput(prefs_.aiProvider1ApiKey().getTitle(), tbAiProvider1ApiKey_));
+      panel.add(labeledInput(prefs_.aiProvider1Model().getTitle(), tbAiProvider1Model_));
+      panel.add(nvwAiProvider1ContextWindow_);
+      return panel;
+   }
+
+   private VerticalPanel createCustomProvider2Panel()
+   {
+      VerticalPanel panel = new VerticalPanel();
+      panel.add(spacedBefore(headerLabel("Custom Provider 2")));
+      panel.add(labeledInput(prefs_.aiProvider2Name().getTitle(), tbAiProvider2Name_));
+      panel.add(labeledInput(prefs_.aiProvider2BaseUrl().getTitle(), tbAiProvider2BaseUrl_));
+      panel.add(labeledInput(prefs_.aiProvider2ApiKey().getTitle(), tbAiProvider2ApiKey_));
+      panel.add(labeledInput(prefs_.aiProvider2Model().getTitle(), tbAiProvider2Model_));
+      panel.add(nvwAiProvider2ContextWindow_);
+      return panel;
+   }
+
+   private VerticalPanel createCustomProvider3Panel()
+   {
+      VerticalPanel panel = new VerticalPanel();
+      panel.add(spacedBefore(headerLabel("Custom Provider 3")));
+      panel.add(labeledInput(prefs_.aiProvider3Name().getTitle(), tbAiProvider3Name_));
+      panel.add(labeledInput(prefs_.aiProvider3BaseUrl().getTitle(), tbAiProvider3BaseUrl_));
+      panel.add(labeledInput(prefs_.aiProvider3ApiKey().getTitle(), tbAiProvider3ApiKey_));
+      panel.add(labeledInput(prefs_.aiProvider3Model().getTitle(), tbAiProvider3Model_));
+      panel.add(nvwAiProvider3ContextWindow_);
       return panel;
    }
 
@@ -1384,6 +1526,28 @@ public class AssistantPreferencesPane extends PreferencesPane
    private final SelectWidget selAssistantTabKeyBehavior_;
    private final SelectWidget selAssistantCompletionsTrigger_;
    private final SelectWidget selChatProvider_;
+
+   // Custom provider 1 UI
+   private final TextBox tbAiProvider1Name_;
+   private final TextBox tbAiProvider1BaseUrl_;
+   private final PasswordTextBox tbAiProvider1ApiKey_;
+   private final TextBox tbAiProvider1Model_;
+   private final NumericValueWidget nvwAiProvider1ContextWindow_;
+
+   // Custom provider 2 UI
+   private final TextBox tbAiProvider2Name_;
+   private final TextBox tbAiProvider2BaseUrl_;
+   private final PasswordTextBox tbAiProvider2ApiKey_;
+   private final TextBox tbAiProvider2Model_;
+   private final NumericValueWidget nvwAiProvider2ContextWindow_;
+
+   // Custom provider 3 UI
+   private final TextBox tbAiProvider3Name_;
+   private final TextBox tbAiProvider3BaseUrl_;
+   private final PasswordTextBox tbAiProvider3ApiKey_;
+   private final TextBox tbAiProvider3Model_;
+   private final NumericValueWidget nvwAiProvider3ContextWindow_;
+
    private final HelpLink linkCopilotTos_;
    private final Label lblCopilotTos_;
    private final Label lblProjectOverride_;
@@ -1401,6 +1565,17 @@ public class AssistantPreferencesPane extends PreferencesPane
    private final ChatServerOperations chatServer_;
    private final PositAiInstallManager installManager_;
    
+   private HorizontalPanel labeledInput(String label, Widget widget)
+   {
+      HorizontalPanel panel = new HorizontalPanel();
+      panel.setVerticalAlignment(HorizontalPanel.ALIGN_MIDDLE);
+      FormLabel formLabel = new FormLabel(label, widget);
+      formLabel.setWidth("180px");
+      panel.add(formLabel);
+      panel.add(widget);
+      return panel;
+   }
+
    private boolean useDarkDialogTheme()
    {
       Element container = Document.get().getElementById("rstudio_container");

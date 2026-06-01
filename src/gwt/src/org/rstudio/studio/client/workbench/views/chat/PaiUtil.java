@@ -116,6 +116,17 @@ public class PaiUtil
    }
 
    /**
+    * Returns true if a custom chat provider is selected (1, 2, or 3).
+    */
+   public boolean isCustomChatProvider()
+   {
+      String provider = getConfiguredChatProvider();
+      return provider.equals(UserPrefsAccessor.CHAT_PROVIDER_CUSTOM_1) ||
+             provider.equals(UserPrefsAccessor.CHAT_PROVIDER_CUSTOM_2) ||
+             provider.equals(UserPrefsAccessor.CHAT_PROVIDER_CUSTOM_3);
+   }
+
+   /**
     * Returns true if chat is disabled (provider set to "none"), checking:
     * 1. Project-level chat provider setting (if set and not "default")
     * 2. Global user preference

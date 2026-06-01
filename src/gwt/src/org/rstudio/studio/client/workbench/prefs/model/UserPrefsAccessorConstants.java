@@ -2202,6 +2202,132 @@ public interface UserPrefsAccessorConstants extends Constants {
    String chatProviderEnum_none();
    @DefaultStringValue("Posit Assistant")
    String chatProviderEnum_posit();
+   @DefaultStringValue("Custom Provider 1")
+   String chatProviderEnum_custom_1();
+   @DefaultStringValue("Custom Provider 2")
+   String chatProviderEnum_custom_2();
+   @DefaultStringValue("Custom Provider 3")
+   String chatProviderEnum_custom_3();
+
+   /**
+    * Display name for the first custom AI provider.
+    */
+   @DefaultStringValue("Custom Provider 1 Name")
+   String aiProvider1NameTitle();
+   @DefaultStringValue("Display name for the first custom AI provider.")
+   String aiProvider1NameDescription();
+
+   /**
+    * Base URL for the first custom AI provider (e.g. https://api.openai.com/v1).
+    */
+   @DefaultStringValue("Custom Provider 1 Base URL")
+   String aiProvider1BaseUrlTitle();
+   @DefaultStringValue("Base URL for the first custom AI provider (e.g. https://api.openai.com/v1).")
+   String aiProvider1BaseUrlDescription();
+
+   /**
+    * API key for the first custom AI provider.
+    */
+   @DefaultStringValue("Custom Provider 1 API Key")
+   String aiProvider1ApiKeyTitle();
+   @DefaultStringValue("API key for the first custom AI provider.")
+   String aiProvider1ApiKeyDescription();
+
+   /**
+    * Model ID for the first custom AI provider (e.g. gpt-4o).
+    */
+   @DefaultStringValue("Custom Provider 1 Model")
+   String aiProvider1ModelTitle();
+   @DefaultStringValue("Model ID for the first custom AI provider (e.g. gpt-4o).")
+   String aiProvider1ModelDescription();
+
+   /**
+    * Maximum context window size in tokens for the first custom AI provider.
+    */
+   @DefaultStringValue("Custom Provider 1 Context Window")
+   String aiProvider1ContextWindowTitle();
+   @DefaultStringValue("Maximum context window size in tokens for the first custom AI provider.")
+   String aiProvider1ContextWindowDescription();
+
+   /**
+    * Display name for the second custom AI provider.
+    */
+   @DefaultStringValue("Custom Provider 2 Name")
+   String aiProvider2NameTitle();
+   @DefaultStringValue("Display name for the second custom AI provider.")
+   String aiProvider2NameDescription();
+
+   /**
+    * Base URL for the second custom AI provider.
+    */
+   @DefaultStringValue("Custom Provider 2 Base URL")
+   String aiProvider2BaseUrlTitle();
+   @DefaultStringValue("Base URL for the second custom AI provider.")
+   String aiProvider2BaseUrlDescription();
+
+   /**
+    * API key for the second custom AI provider.
+    */
+   @DefaultStringValue("Custom Provider 2 API Key")
+   String aiProvider2ApiKeyTitle();
+   @DefaultStringValue("API key for the second custom AI provider.")
+   String aiProvider2ApiKeyDescription();
+
+   /**
+    * Model ID for the second custom AI provider.
+    */
+   @DefaultStringValue("Custom Provider 2 Model")
+   String aiProvider2ModelTitle();
+   @DefaultStringValue("Model ID for the second custom AI provider.")
+   String aiProvider2ModelDescription();
+
+   /**
+    * Maximum context window size in tokens for the second custom AI provider.
+    */
+   @DefaultStringValue("Custom Provider 2 Context Window")
+   String aiProvider2ContextWindowTitle();
+   @DefaultStringValue("Maximum context window size in tokens for the second custom AI provider.")
+   String aiProvider2ContextWindowDescription();
+
+   /**
+    * Display name for the third custom AI provider.
+    */
+   @DefaultStringValue("Custom Provider 3 Name")
+   String aiProvider3NameTitle();
+   @DefaultStringValue("Display name for the third custom AI provider.")
+   String aiProvider3NameDescription();
+
+   /**
+    * Base URL for the third custom AI provider.
+    */
+   @DefaultStringValue("Custom Provider 3 Base URL")
+   String aiProvider3BaseUrlTitle();
+   @DefaultStringValue("Base URL for the third custom AI provider.")
+   String aiProvider3BaseUrlDescription();
+
+   /**
+    * API key for the third custom AI provider.
+    */
+   @DefaultStringValue("Custom Provider 3 API Key")
+   String aiProvider3ApiKeyTitle();
+   @DefaultStringValue("API key for the third custom AI provider.")
+   String aiProvider3ApiKeyDescription();
+
+   /**
+    * Model ID for the third custom AI provider.
+    */
+   @DefaultStringValue("Custom Provider 3 Model")
+   String aiProvider3ModelTitle();
+   @DefaultStringValue("Model ID for the third custom AI provider.")
+   String aiProvider3ModelDescription();
+
+   /**
+    * Maximum context window size in tokens for the third custom AI provider.
+    */
+   @DefaultStringValue("Custom Provider 3 Context Window")
+   String aiProvider3ContextWindowTitle();
+   @DefaultStringValue("Maximum context window size in tokens for the third custom AI provider.")
+   String aiProvider3ContextWindowDescription();
 
    /**
     * Control when code suggestions are displayed in the editor.

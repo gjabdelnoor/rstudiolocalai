@@ -3443,6 +3443,201 @@ core::Error UserPrefValues::setChatProvider(std::string val)
 }
 
 /**
+ * Display name for the first custom AI provider.
+ */
+std::string UserPrefValues::aiProvider1Name()
+{
+   return readPref<std::string>("ai_provider_1_name");
+}
+
+core::Error UserPrefValues::setAiProvider1Name(std::string val)
+{
+   return writePref("ai_provider_1_name", val);
+}
+
+/**
+ * Base URL for the first custom AI provider (e.g. https://api.openai.com/v1).
+ */
+std::string UserPrefValues::aiProvider1BaseUrl()
+{
+   return readPref<std::string>("ai_provider_1_base_url");
+}
+
+core::Error UserPrefValues::setAiProvider1BaseUrl(std::string val)
+{
+   return writePref("ai_provider_1_base_url", val);
+}
+
+/**
+ * API key for the first custom AI provider.
+ */
+std::string UserPrefValues::aiProvider1ApiKey()
+{
+   return readPref<std::string>("ai_provider_1_api_key");
+}
+
+core::Error UserPrefValues::setAiProvider1ApiKey(std::string val)
+{
+   return writePref("ai_provider_1_api_key", val);
+}
+
+/**
+ * Model ID for the first custom AI provider (e.g. gpt-4o).
+ */
+std::string UserPrefValues::aiProvider1Model()
+{
+   return readPref<std::string>("ai_provider_1_model");
+}
+
+core::Error UserPrefValues::setAiProvider1Model(std::string val)
+{
+   return writePref("ai_provider_1_model", val);
+}
+
+/**
+ * Maximum context window size in tokens for the first custom AI provider.
+ */
+int UserPrefValues::aiProvider1ContextWindow()
+{
+   return readPref<int>("ai_provider_1_context_window");
+}
+
+core::Error UserPrefValues::setAiProvider1ContextWindow(int val)
+{
+   return writePref("ai_provider_1_context_window", val);
+}
+
+/**
+ * Display name for the second custom AI provider.
+ */
+std::string UserPrefValues::aiProvider2Name()
+{
+   return readPref<std::string>("ai_provider_2_name");
+}
+
+core::Error UserPrefValues::setAiProvider2Name(std::string val)
+{
+   return writePref("ai_provider_2_name", val);
+}
+
+/**
+ * Base URL for the second custom AI provider.
+ */
+std::string UserPrefValues::aiProvider2BaseUrl()
+{
+   return readPref<std::string>("ai_provider_2_base_url");
+}
+
+core::Error UserPrefValues::setAiProvider2BaseUrl(std::string val)
+{
+   return writePref("ai_provider_2_base_url", val);
+}
+
+/**
+ * API key for the second custom AI provider.
+ */
+std::string UserPrefValues::aiProvider2ApiKey()
+{
+   return readPref<std::string>("ai_provider_2_api_key");
+}
+
+core::Error UserPrefValues::setAiProvider2ApiKey(std::string val)
+{
+   return writePref("ai_provider_2_api_key", val);
+}
+
+/**
+ * Model ID for the second custom AI provider.
+ */
+std::string UserPrefValues::aiProvider2Model()
+{
+   return readPref<std::string>("ai_provider_2_model");
+}
+
+core::Error UserPrefValues::setAiProvider2Model(std::string val)
+{
+   return writePref("ai_provider_2_model", val);
+}
+
+/**
+ * Maximum context window size in tokens for the second custom AI provider.
+ */
+int UserPrefValues::aiProvider2ContextWindow()
+{
+   return readPref<int>("ai_provider_2_context_window");
+}
+
+core::Error UserPrefValues::setAiProvider2ContextWindow(int val)
+{
+   return writePref("ai_provider_2_context_window", val);
+}
+
+/**
+ * Display name for the third custom AI provider.
+ */
+std::string UserPrefValues::aiProvider3Name()
+{
+   return readPref<std::string>("ai_provider_3_name");
+}
+
+core::Error UserPrefValues::setAiProvider3Name(std::string val)
+{
+   return writePref("ai_provider_3_name", val);
+}
+
+/**
+ * Base URL for the third custom AI provider.
+ */
+std::string UserPrefValues::aiProvider3BaseUrl()
+{
+   return readPref<std::string>("ai_provider_3_base_url");
+}
+
+core::Error UserPrefValues::setAiProvider3BaseUrl(std::string val)
+{
+   return writePref("ai_provider_3_base_url", val);
+}
+
+/**
+ * API key for the third custom AI provider.
+ */
+std::string UserPrefValues::aiProvider3ApiKey()
+{
+   return readPref<std::string>("ai_provider_3_api_key");
+}
+
+core::Error UserPrefValues::setAiProvider3ApiKey(std::string val)
+{
+   return writePref("ai_provider_3_api_key", val);
+}
+
+/**
+ * Model ID for the third custom AI provider.
+ */
+std::string UserPrefValues::aiProvider3Model()
+{
+   return readPref<std::string>("ai_provider_3_model");
+}
+
+core::Error UserPrefValues::setAiProvider3Model(std::string val)
+{
+   return writePref("ai_provider_3_model", val);
+}
+
+/**
+ * Maximum context window size in tokens for the third custom AI provider.
+ */
+int UserPrefValues::aiProvider3ContextWindow()
+{
+   return readPref<int>("ai_provider_3_context_window");
+}
+
+core::Error UserPrefValues::setAiProvider3ContextWindow(int val)
+{
+   return writePref("ai_provider_3_context_window", val);
+}
+
+/**
  * Control when code suggestions are displayed in the editor.
  */
 std::string UserPrefValues::assistantCompletionsTrigger()
@@ -4059,6 +4254,21 @@ std::vector<std::string> UserPrefValues::allKeys()
       kDisableRendererAccessibility,
       kAssistant,
       kChatProvider,
+      kAiProvider1Name,
+      kAiProvider1BaseUrl,
+      kAiProvider1ApiKey,
+      kAiProvider1Model,
+      kAiProvider1ContextWindow,
+      kAiProvider2Name,
+      kAiProvider2BaseUrl,
+      kAiProvider2ApiKey,
+      kAiProvider2Model,
+      kAiProvider2ContextWindow,
+      kAiProvider3Name,
+      kAiProvider3BaseUrl,
+      kAiProvider3ApiKey,
+      kAiProvider3Model,
+      kAiProvider3ContextWindow,
       kAssistantCompletionsTrigger,
       kAssistantCompletionsDelay,
       kAssistantTabKeyBehavior,

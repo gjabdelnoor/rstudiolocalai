@@ -204,23 +204,35 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
          chatProviderLabels = new String[] {
                constants_.defaultInParentheses(),
                constants_.none(),
-               prefsConstants_.chatProviderEnum_posit()
+               prefsConstants_.chatProviderEnum_posit(),
+               prefsConstants_.chatProviderEnum_custom_1(),
+               prefsConstants_.chatProviderEnum_custom_2(),
+               prefsConstants_.chatProviderEnum_custom_3()
          };
          chatProviderValues = new String[] {
                CHAT_PROVIDER_DEFAULT,
                UserPrefsAccessor.CHAT_PROVIDER_NONE,
-               UserPrefsAccessor.CHAT_PROVIDER_POSIT
+               UserPrefsAccessor.CHAT_PROVIDER_POSIT,
+               UserPrefsAccessor.CHAT_PROVIDER_CUSTOM_1,
+               UserPrefsAccessor.CHAT_PROVIDER_CUSTOM_2,
+               UserPrefsAccessor.CHAT_PROVIDER_CUSTOM_3
          };
       }
       else
       {
          chatProviderLabels = new String[] {
                constants_.defaultInParentheses(),
-               constants_.none()
+               constants_.none(),
+               prefsConstants_.chatProviderEnum_custom_1(),
+               prefsConstants_.chatProviderEnum_custom_2(),
+               prefsConstants_.chatProviderEnum_custom_3()
          };
          chatProviderValues = new String[] {
                CHAT_PROVIDER_DEFAULT,
-               UserPrefsAccessor.CHAT_PROVIDER_NONE
+               UserPrefsAccessor.CHAT_PROVIDER_NONE,
+               UserPrefsAccessor.CHAT_PROVIDER_CUSTOM_1,
+               UserPrefsAccessor.CHAT_PROVIDER_CUSTOM_2,
+               UserPrefsAccessor.CHAT_PROVIDER_CUSTOM_3
          };
       }
       selChatProvider_ = new SelectWidget(
@@ -470,6 +482,12 @@ public class ProjectAssistantPreferencesPane extends ProjectPreferencesPane
       String globalChatProviderName;
       if (globalChatProvider.equals(UserPrefsAccessor.CHAT_PROVIDER_POSIT))
          globalChatProviderName = prefsConstants_.chatProviderEnum_posit();
+      else if (globalChatProvider.equals(UserPrefsAccessor.CHAT_PROVIDER_CUSTOM_1))
+         globalChatProviderName = prefsConstants_.chatProviderEnum_custom_1();
+      else if (globalChatProvider.equals(UserPrefsAccessor.CHAT_PROVIDER_CUSTOM_2))
+         globalChatProviderName = prefsConstants_.chatProviderEnum_custom_2();
+      else if (globalChatProvider.equals(UserPrefsAccessor.CHAT_PROVIDER_CUSTOM_3))
+         globalChatProviderName = prefsConstants_.chatProviderEnum_custom_3();
       else
          globalChatProviderName = constants_.none();
 

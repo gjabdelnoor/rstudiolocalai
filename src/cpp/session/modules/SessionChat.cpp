@@ -223,11 +223,30 @@ bool isChatProviderPosit()
    return getConfiguredChatProvider() == kChatProviderPosit;
 }
 
+// Returns true if a custom chat provider is selected (1, 2, or 3)
+bool isCustomChatProvider()
+{
+   std::string provider = getConfiguredChatProvider();
+   return provider == kChatProviderCustom1 ||
+          provider == kChatProviderCustom2 ||
+          provider == kChatProviderCustom3;
+}
+
+// Returns the selected custom provider index (1-3) or 0 if none
+int getCustomProviderIndex()
+{
+   std::string provider = getConfiguredChatProvider();
+   if (provider == kChatProviderCustom1) return 1;
+   if (provider == kChatProviderCustom2) return 2;
+   if (provider == kChatProviderCustom3) return 3;
+   return 0;
+}
+
 // Returns true if the user wants Posit Assistant for either chat or completions
 // Used to determine if install/update operations should be allowed
 bool isPositAssistantWanted()
 {
-   return isChatProviderPosit() || isPaiSelected();
+   return isChatProviderPosit() || isCustomChatProvider() || isPaiSelected();
 }
 
 // Selective imports from chat modules to avoid namespace pollution
@@ -4824,6 +4843,48 @@ Error startChatBackend(bool resumeConversation)
 
    // Pass per-session auth token for WebSocket authentication
    core::system::setenv(&environment, "RSTUDIO_CHAT_AUTH_TOKEN", s_chatBackendAuthToken);
+
+   // If a custom provider is selected, pass its configuration to the backend
+   // via environment variables. The Posit Assistant backend supports
+   // PA_PROVIDER=openaiCompatible with PA_MODEL, POSITAI_BASE_URL, and
+   // AI_GATEWAY_API_KEY to redirect LLM calls to any OpenAI-compatible endpoint.
+   if (isCustomChatProvider())
+   {
+      int idx = getCustomProviderIndex();
+      std::string baseUrl, apiKey, model;
+      int contextWindow = 8192;
+      switch (idx)
+      {
+         case 1:
+            baseUrl = prefs::userPrefs().aiProvider1BaseUrl();
+            apiKey = prefs::userPrefs().aiProvider1ApiKey();
+            model = prefs::userPrefs().aiProvider1Model();
+            contextWindow = prefs::userPrefs().aiProvider1ContextWindow();
+            break;
+         case 2:
+            baseUrl = prefs::userPrefs().aiProvider2BaseUrl();
+            apiKey = prefs::userPrefs().aiProvider2ApiKey();
+            model = prefs::userPrefs().aiProvider2Model();
+            contextWindow = prefs::userPrefs().aiProvider2ContextWindow();
+            break;
+         case 3:
+            baseUrl = prefs::userPrefs().aiProvider3BaseUrl();
+            apiKey = prefs::userPrefs().aiProvider3ApiKey();
+            model = prefs::userPrefs().aiProvider3Model();
+            contextWindow = prefs::userPrefs().aiProvider3ContextWindow();
+            break;
+      }
+      if (!baseUrl.empty())
+      {
+         core::system::setenv(&environment, "PA_PROVIDER", "openaiCompatible");
+         core::system::setenv(&environment, "PA_MODEL", model);
+         core::system::setenv(&environment, "POSITAI_BASE_URL", baseUrl);
+         core::system::setenv(&environment, "AI_GATEWAY_API_KEY", apiKey);
+         core::system::setenv(&environment, "RSTUDIO_AI_MAX_CONTEXT",
+                              boost::lexical_cast<std::string>(contextWindow));
+         DLOG("Custom provider {} configured: model={}, baseUrl={}", idx, model, baseUrl);
+      }
+   }
 
 #ifdef _WIN32
    // On Windows, R sets HOME to the user's Documents directory rather than

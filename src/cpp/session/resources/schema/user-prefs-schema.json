@@ -1805,11 +1805,101 @@
         },
         "chat_provider": {
             "type": "string",
-            "enum": ["none", "posit"],
-            "enumReadable": ["(None)", "Posit Assistant"],
+            "enum": ["none", "posit", "custom_1", "custom_2", "custom_3"],
+            "enumReadable": ["(None)", "Posit Assistant", "Custom Provider 1", "Custom Provider 2", "Custom Provider 3"],
             "default": "posit",
             "title": "Chat Provider",
             "description": "Select which AI assistant to use for chat functionality."
+        },
+        "ai_provider_1_name": {
+            "type": "string",
+            "default": "",
+            "title": "Custom Provider 1 Name",
+            "description": "Display name for the first custom AI provider."
+        },
+        "ai_provider_1_base_url": {
+            "type": "string",
+            "default": "",
+            "title": "Custom Provider 1 Base URL",
+            "description": "Base URL for the first custom AI provider (e.g. https://api.openai.com/v1)."
+        },
+        "ai_provider_1_api_key": {
+            "type": "string",
+            "default": "",
+            "title": "Custom Provider 1 API Key",
+            "description": "API key for the first custom AI provider."
+        },
+        "ai_provider_1_model": {
+            "type": "string",
+            "default": "",
+            "title": "Custom Provider 1 Model",
+            "description": "Model ID for the first custom AI provider (e.g. gpt-4o)."
+        },
+        "ai_provider_1_context_window": {
+            "type": "integer",
+            "default": 8192,
+            "title": "Custom Provider 1 Context Window",
+            "description": "Maximum context window size in tokens for the first custom AI provider."
+        },
+        "ai_provider_2_name": {
+            "type": "string",
+            "default": "",
+            "title": "Custom Provider 2 Name",
+            "description": "Display name for the second custom AI provider."
+        },
+        "ai_provider_2_base_url": {
+            "type": "string",
+            "default": "",
+            "title": "Custom Provider 2 Base URL",
+            "description": "Base URL for the second custom AI provider."
+        },
+        "ai_provider_2_api_key": {
+            "type": "string",
+            "default": "",
+            "title": "Custom Provider 2 API Key",
+            "description": "API key for the second custom AI provider."
+        },
+        "ai_provider_2_model": {
+            "type": "string",
+            "default": "",
+            "title": "Custom Provider 2 Model",
+            "description": "Model ID for the second custom AI provider."
+        },
+        "ai_provider_2_context_window": {
+            "type": "integer",
+            "default": 8192,
+            "title": "Custom Provider 2 Context Window",
+            "description": "Maximum context window size in tokens for the second custom AI provider."
+        },
+        "ai_provider_3_name": {
+            "type": "string",
+            "default": "",
+            "title": "Custom Provider 3 Name",
+            "description": "Display name for the third custom AI provider."
+        },
+        "ai_provider_3_base_url": {
+            "type": "string",
+            "default": "",
+            "title": "Custom Provider 3 Base URL",
+            "description": "Base URL for the third custom AI provider."
+        },
+        "ai_provider_3_api_key": {
+            "type": "string",
+            "default": "",
+            "title": "Custom Provider 3 API Key",
+            "description": "API key for the third custom AI provider."
+        },
+        "ai_provider_3_model": {
+            "type": "string",
+            "default": "",
+            "title": "Custom Provider 3 Model",
+            "description": "Model ID for the third custom AI provider."
+        },
+        "ai_provider_3_context_window": {
+            "type": "integer",
+            "default": 8192,
+            "title": "Custom Provider 3 Context Window",
+            "description": "Maximum context window size in tokens for the third custom AI provider."
         },
         "assistant_completions_trigger": {
             "type": "string",

@@ -451,6 +451,24 @@ namespace prefs {
 #define kChatProvider "chat_provider"
 #define kChatProviderNone "none"
 #define kChatProviderPosit "posit"
+#define kChatProviderCustom1 "custom_1"
+#define kChatProviderCustom2 "custom_2"
+#define kChatProviderCustom3 "custom_3"
+#define kAiProvider1Name "ai_provider_1_name"
+#define kAiProvider1BaseUrl "ai_provider_1_base_url"
+#define kAiProvider1ApiKey "ai_provider_1_api_key"
+#define kAiProvider1Model "ai_provider_1_model"
+#define kAiProvider1ContextWindow "ai_provider_1_context_window"
+#define kAiProvider2Name "ai_provider_2_name"
+#define kAiProvider2BaseUrl "ai_provider_2_base_url"
+#define kAiProvider2ApiKey "ai_provider_2_api_key"
+#define kAiProvider2Model "ai_provider_2_model"
+#define kAiProvider2ContextWindow "ai_provider_2_context_window"
+#define kAiProvider3Name "ai_provider_3_name"
+#define kAiProvider3BaseUrl "ai_provider_3_base_url"
+#define kAiProvider3ApiKey "ai_provider_3_api_key"
+#define kAiProvider3Model "ai_provider_3_model"
+#define kAiProvider3ContextWindow "ai_provider_3_context_window"
 #define kAssistantCompletionsTrigger "assistant_completions_trigger"
 #define kAssistantCompletionsTriggerAuto "auto"
 #define kAssistantCompletionsTriggerManual "manual"
@@ -2078,6 +2096,96 @@ public:
     */
    std::string chatProvider();
    core::Error setChatProvider(std::string val);
+
+   /**
+    * Display name for the first custom AI provider.
+    */
+   std::string aiProvider1Name();
+   core::Error setAiProvider1Name(std::string val);
+
+   /**
+    * Base URL for the first custom AI provider (e.g. https://api.openai.com/v1).
+    */
+   std::string aiProvider1BaseUrl();
+   core::Error setAiProvider1BaseUrl(std::string val);
+
+   /**
+    * API key for the first custom AI provider.
+    */
+   std::string aiProvider1ApiKey();
+   core::Error setAiProvider1ApiKey(std::string val);
+
+   /**
+    * Model ID for the first custom AI provider (e.g. gpt-4o).
+    */
+   std::string aiProvider1Model();
+   core::Error setAiProvider1Model(std::string val);
+
+   /**
+    * Maximum context window size in tokens for the first custom AI provider.
+    */
+   int aiProvider1ContextWindow();
+   core::Error setAiProvider1ContextWindow(int val);
+
+   /**
+    * Display name for the second custom AI provider.
+    */
+   std::string aiProvider2Name();
+   core::Error setAiProvider2Name(std::string val);
+
+   /**
+    * Base URL for the second custom AI provider.
+    */
+   std::string aiProvider2BaseUrl();
+   core::Error setAiProvider2BaseUrl(std::string val);
+
+   /**
+    * API key for the second custom AI provider.
+    */
+   std::string aiProvider2ApiKey();
+   core::Error setAiProvider2ApiKey(std::string val);
+
+   /**
+    * Model ID for the second custom AI provider.
+    */
+   std::string aiProvider2Model();
+   core::Error setAiProvider2Model(std::string val);
+
+   /**
+    * Maximum context window size in tokens for the second custom AI provider.
+    */
+   int aiProvider2ContextWindow();
+   core::Error setAiProvider2ContextWindow(int val);
+
+   /**
+    * Display name for the third custom AI provider.
+    */
+   std::string aiProvider3Name();
+   core::Error setAiProvider3Name(std::string val);
+
+   /**
+    * Base URL for the third custom AI provider.
+    */
+   std::string aiProvider3BaseUrl();
+   core::Error setAiProvider3BaseUrl(std::string val);
+
+   /**
+    * API key for the third custom AI provider.
+    */
+   std::string aiProvider3ApiKey();
+   core::Error setAiProvider3ApiKey(std::string val);
+
+   /**
+    * Model ID for the third custom AI provider.
+    */
+   std::string aiProvider3Model();
+   core::Error setAiProvider3Model(std::string val);
+
+   /**
+    * Maximum context window size in tokens for the third custom AI provider.
+    */
+   int aiProvider3ContextWindow();
+   core::Error setAiProvider3ContextWindow(int val);
 
    /**
     * Control when code suggestions are displayed in the editor.

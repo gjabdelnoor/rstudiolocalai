@@ -307,6 +307,21 @@ public class UserPrefsAccessor extends Prefs
    public static final String DISABLE_RENDERER_ACCESSIBILITY = "disable_renderer_accessibility";
    public static final String ASSISTANT = "assistant";
    public static final String CHAT_PROVIDER = "chat_provider";
+   public static final String AI_PROVIDER_1_NAME = "ai_provider_1_name";
+   public static final String AI_PROVIDER_1_BASE_URL = "ai_provider_1_base_url";
+   public static final String AI_PROVIDER_1_API_KEY = "ai_provider_1_api_key"; // pragma: allowlist secret
+   public static final String AI_PROVIDER_1_MODEL = "ai_provider_1_model";
+   public static final String AI_PROVIDER_1_CONTEXT_WINDOW = "ai_provider_1_context_window";
+   public static final String AI_PROVIDER_2_NAME = "ai_provider_2_name";
+   public static final String AI_PROVIDER_2_BASE_URL = "ai_provider_2_base_url";
+   public static final String AI_PROVIDER_2_API_KEY = "ai_provider_2_api_key"; // pragma: allowlist secret
+   public static final String AI_PROVIDER_2_MODEL = "ai_provider_2_model";
+   public static final String AI_PROVIDER_2_CONTEXT_WINDOW = "ai_provider_2_context_window";
+   public static final String AI_PROVIDER_3_NAME = "ai_provider_3_name";
+   public static final String AI_PROVIDER_3_BASE_URL = "ai_provider_3_base_url";
+   public static final String AI_PROVIDER_3_API_KEY = "ai_provider_3_api_key"; // pragma: allowlist secret
+   public static final String AI_PROVIDER_3_MODEL = "ai_provider_3_model";
+   public static final String AI_PROVIDER_3_CONTEXT_WINDOW = "ai_provider_3_context_window";
    public static final String ASSISTANT_COMPLETIONS_TRIGGER = "assistant_completions_trigger";
    public static final String ASSISTANT_COMPLETIONS_DELAY = "assistant_completions_delay";
    public static final String ASSISTANT_TAB_KEY_BEHAVIOR = "assistant_tab_key_behavior";
@@ -4054,17 +4069,206 @@ public class UserPrefsAccessor extends Prefs
          _constants.chatProviderDescription(), 
          new String[] {
             CHAT_PROVIDER_NONE,
-            CHAT_PROVIDER_POSIT
+            CHAT_PROVIDER_POSIT,
+            CHAT_PROVIDER_CUSTOM_1,
+            CHAT_PROVIDER_CUSTOM_2,
+            CHAT_PROVIDER_CUSTOM_3
          },
          "posit",
          new String[] {
             _constants.chatProviderEnum_none(),
-            _constants.chatProviderEnum_posit()
+            _constants.chatProviderEnum_posit(),
+            _constants.chatProviderEnum_custom_1(),
+            _constants.chatProviderEnum_custom_2(),
+            _constants.chatProviderEnum_custom_3()
          });
    }
 
    public final static String CHAT_PROVIDER_NONE = "none";
    public final static String CHAT_PROVIDER_POSIT = "posit";
+   public final static String CHAT_PROVIDER_CUSTOM_1 = "custom_1";
+   public final static String CHAT_PROVIDER_CUSTOM_2 = "custom_2";
+   public final static String CHAT_PROVIDER_CUSTOM_3 = "custom_3";
+
+   /**
+    * Display name for the first custom AI provider.
+    */
+   public PrefValue<String> aiProvider1Name()
+   {
+      return string(
+         "ai_provider_1_name",
+         _constants.aiProvider1NameTitle(), 
+         _constants.aiProvider1NameDescription(), 
+         "");
+   }
+
+   /**
+    * Base URL for the first custom AI provider (e.g. https://api.openai.com/v1).
+    */
+   public PrefValue<String> aiProvider1BaseUrl()
+   {
+      return string(
+         "ai_provider_1_base_url",
+         _constants.aiProvider1BaseUrlTitle(), 
+         _constants.aiProvider1BaseUrlDescription(), 
+         "");
+   }
+
+   /**
+    * API key for the first custom AI provider.
+    */
+   public PrefValue<String> aiProvider1ApiKey()
+   {
+      return string(
+         "ai_provider_1_api_key",
+         _constants.aiProvider1ApiKeyTitle(), 
+         _constants.aiProvider1ApiKeyDescription(), 
+         "");
+   }
+
+   /**
+    * Model ID for the first custom AI provider (e.g. gpt-4o).
+    */
+   public PrefValue<String> aiProvider1Model()
+   {
+      return string(
+         "ai_provider_1_model",
+         _constants.aiProvider1ModelTitle(), 
+         _constants.aiProvider1ModelDescription(), 
+         "");
+   }
+
+   /**
+    * Maximum context window size in tokens for the first custom AI provider.
+    */
+   public PrefValue<Integer> aiProvider1ContextWindow()
+   {
+      return integer(
+         "ai_provider_1_context_window",
+         _constants.aiProvider1ContextWindowTitle(), 
+         _constants.aiProvider1ContextWindowDescription(), 
+         8192);
+   }
+
+   /**
+    * Display name for the second custom AI provider.
+    */
+   public PrefValue<String> aiProvider2Name()
+   {
+      return string(
+         "ai_provider_2_name",
+         _constants.aiProvider2NameTitle(), 
+         _constants.aiProvider2NameDescription(), 
+         "");
+   }
+
+   /**
+    * Base URL for the second custom AI provider.
+    */
+   public PrefValue<String> aiProvider2BaseUrl()
+   {
+      return string(
+         "ai_provider_2_base_url",
+         _constants.aiProvider2BaseUrlTitle(), 
+         _constants.aiProvider2BaseUrlDescription(), 
+         "");
+   }
+
+   /**
+    * API key for the second custom AI provider.
+    */
+   public PrefValue<String> aiProvider2ApiKey()
+   {
+      return string(
+         "ai_provider_2_api_key",
+         _constants.aiProvider2ApiKeyTitle(), 
+         _constants.aiProvider2ApiKeyDescription(), 
+         "");
+   }
+
+   /**
+    * Model ID for the second custom AI provider.
+    */
+   public PrefValue<String> aiProvider2Model()
+   {
+      return string(
+         "ai_provider_2_model",
+         _constants.aiProvider2ModelTitle(), 
+         _constants.aiProvider2ModelDescription(), 
+         "");
+   }
+
+   /**
+    * Maximum context window size in tokens for the second custom AI provider.
+    */
+   public PrefValue<Integer> aiProvider2ContextWindow()
+   {
+      return integer(
+         "ai_provider_2_context_window",
+         _constants.aiProvider2ContextWindowTitle(), 
+         _constants.aiProvider2ContextWindowDescription(), 
+         8192);
+   }
+
+   /**
+    * Display name for the third custom AI provider.
+    */
+   public PrefValue<String> aiProvider3Name()
+   {
+      return string(
+         "ai_provider_3_name",
+         _constants.aiProvider3NameTitle(), 
+         _constants.aiProvider3NameDescription(), 
+         "");
+   }
+
+   /**
+    * Base URL for the third custom AI provider.
+    */
+   public PrefValue<String> aiProvider3BaseUrl()
+   {
+      return string(
+         "ai_provider_3_base_url",
+         _constants.aiProvider3BaseUrlTitle(), 
+         _constants.aiProvider3BaseUrlDescription(), 
+         "");
+   }
+
+   /**
+    * API key for the third custom AI provider.
+    */
+   public PrefValue<String> aiProvider3ApiKey()
+   {
+      return string(
+         "ai_provider_3_api_key",
+         _constants.aiProvider3ApiKeyTitle(), 
+         _constants.aiProvider3ApiKeyDescription(), 
+         "");
+   }
+
+   /**
+    * Model ID for the third custom AI provider.
+    */
+   public PrefValue<String> aiProvider3Model()
+   {
+      return string(
+         "ai_provider_3_model",
+         _constants.aiProvider3ModelTitle(), 
+         _constants.aiProvider3ModelDescription(), 
+         "");
+   }
+
+   /**
+    * Maximum context window size in tokens for the third custom AI provider.
+    */
+   public PrefValue<Integer> aiProvider3ContextWindow()
+   {
+      return integer(
+         "ai_provider_3_context_window",
+         _constants.aiProvider3ContextWindowTitle(), 
+         _constants.aiProvider3ContextWindowDescription(), 
+         8192);
+   }
 
    /**
     * Control when code suggestions are displayed in the editor.
@@ -5004,6 +5208,36 @@ public class UserPrefsAccessor extends Prefs
          assistant().setValue(layer, source.getString("assistant"));
       if (source.hasKey("chat_provider"))
          chatProvider().setValue(layer, source.getString("chat_provider"));
+      if (source.hasKey("ai_provider_1_name"))
+         aiProvider1Name().setValue(layer, source.getString("ai_provider_1_name"));
+      if (source.hasKey("ai_provider_1_base_url"))
+         aiProvider1BaseUrl().setValue(layer, source.getString("ai_provider_1_base_url"));
+      if (source.hasKey("ai_provider_1_api_key"))
+         aiProvider1ApiKey().setValue(layer, source.getString("ai_provider_1_api_key"));
+      if (source.hasKey("ai_provider_1_model"))
+         aiProvider1Model().setValue(layer, source.getString("ai_provider_1_model"));
+      if (source.hasKey("ai_provider_1_context_window"))
+         aiProvider1ContextWindow().setValue(layer, source.getInteger("ai_provider_1_context_window"));
+      if (source.hasKey("ai_provider_2_name"))
+         aiProvider2Name().setValue(layer, source.getString("ai_provider_2_name"));
+      if (source.hasKey("ai_provider_2_base_url"))
+         aiProvider2BaseUrl().setValue(layer, source.getString("ai_provider_2_base_url"));
+      if (source.hasKey("ai_provider_2_api_key"))
+         aiProvider2ApiKey().setValue(layer, source.getString("ai_provider_2_api_key"));
+      if (source.hasKey("ai_provider_2_model"))
+         aiProvider2Model().setValue(layer, source.getString("ai_provider_2_model"));
+      if (source.hasKey("ai_provider_2_context_window"))
+         aiProvider2ContextWindow().setValue(layer, source.getInteger("ai_provider_2_context_window"));
+      if (source.hasKey("ai_provider_3_name"))
+         aiProvider3Name().setValue(layer, source.getString("ai_provider_3_name"));
+      if (source.hasKey("ai_provider_3_base_url"))
+         aiProvider3BaseUrl().setValue(layer, source.getString("ai_provider_3_base_url"));
+      if (source.hasKey("ai_provider_3_api_key"))
+         aiProvider3ApiKey().setValue(layer, source.getString("ai_provider_3_api_key"));
+      if (source.hasKey("ai_provider_3_model"))
+         aiProvider3Model().setValue(layer, source.getString("ai_provider_3_model"));
+      if (source.hasKey("ai_provider_3_context_window"))
+         aiProvider3ContextWindow().setValue(layer, source.getInteger("ai_provider_3_context_window"));
       if (source.hasKey("assistant_completions_trigger"))
          assistantCompletionsTrigger().setValue(layer, source.getString("assistant_completions_trigger"));
       if (source.hasKey("assistant_completions_delay"))
@@ -5325,6 +5559,21 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(disableRendererAccessibility());
       prefs.add(assistant());
       prefs.add(chatProvider());
+      prefs.add(aiProvider1Name());
+      prefs.add(aiProvider1BaseUrl());
+      prefs.add(aiProvider1ApiKey());
+      prefs.add(aiProvider1Model());
+      prefs.add(aiProvider1ContextWindow());
+      prefs.add(aiProvider2Name());
+      prefs.add(aiProvider2BaseUrl());
+      prefs.add(aiProvider2ApiKey());
+      prefs.add(aiProvider2Model());
+      prefs.add(aiProvider2ContextWindow());
+      prefs.add(aiProvider3Name());
+      prefs.add(aiProvider3BaseUrl());
+      prefs.add(aiProvider3ApiKey());
+      prefs.add(aiProvider3Model());
+      prefs.add(aiProvider3ContextWindow());
       prefs.add(assistantCompletionsTrigger());
       prefs.add(assistantCompletionsDelay());
       prefs.add(assistantTabKeyBehavior());

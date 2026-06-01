@@ -2454,6 +2454,141 @@
    clear = function() { .rs.clearUserPref("chat_provider") }
 )
 
+# Custom Provider 1 Name
+#
+# Display name for the first custom AI provider.
+.rs.uiPrefs$aiProvider1Name <- list(
+   get = function() { .rs.getUserPref("ai_provider_1_name") },
+   set = function(value) { .rs.setUserPref("ai_provider_1_name", value) },
+   clear = function() { .rs.clearUserPref("ai_provider_1_name") }
+)
+
+# Custom Provider 1 Base URL
+#
+# Base URL for the first custom AI provider (e.g. https://api.openai.com/v1).
+.rs.uiPrefs$aiProvider1BaseUrl <- list(
+   get = function() { .rs.getUserPref("ai_provider_1_base_url") },
+   set = function(value) { .rs.setUserPref("ai_provider_1_base_url", value) },
+   clear = function() { .rs.clearUserPref("ai_provider_1_base_url") }
+)
+
+# Custom Provider 1 API Key
+#
+# API key for the first custom AI provider.
+.rs.uiPrefs$aiProvider1ApiKey <- list(
+   get = function() { .rs.getUserPref("ai_provider_1_api_key") },
+   set = function(value) { .rs.setUserPref("ai_provider_1_api_key", value) },
+   clear = function() { .rs.clearUserPref("ai_provider_1_api_key") }
+)
+
+# Custom Provider 1 Model
+#
+# Model ID for the first custom AI provider (e.g. gpt-4o).
+.rs.uiPrefs$aiProvider1Model <- list(
+   get = function() { .rs.getUserPref("ai_provider_1_model") },
+   set = function(value) { .rs.setUserPref("ai_provider_1_model", value) },
+   clear = function() { .rs.clearUserPref("ai_provider_1_model") }
+)
+
+# Custom Provider 1 Context Window
+#
+# Maximum context window size in tokens for the first custom AI provider.
+.rs.uiPrefs$aiProvider1ContextWindow <- list(
+   get = function() { .rs.getUserPref("ai_provider_1_context_window") },
+   set = function(value) { .rs.setUserPref("ai_provider_1_context_window", value) },
+   clear = function() { .rs.clearUserPref("ai_provider_1_context_window") }
+)
+
+# Custom Provider 2 Name
+#
+# Display name for the second custom AI provider.
+.rs.uiPrefs$aiProvider2Name <- list(
+   get = function() { .rs.getUserPref("ai_provider_2_name") },
+   set = function(value) { .rs.setUserPref("ai_provider_2_name", value) },
+   clear = function() { .rs.clearUserPref("ai_provider_2_name") }
+)
+
+# Custom Provider 2 Base URL
+#
+# Base URL for the second custom AI provider.
+.rs.uiPrefs$aiProvider2BaseUrl <- list(
+   get = function() { .rs.getUserPref("ai_provider_2_base_url") },
+   set = function(value) { .rs.setUserPref("ai_provider_2_base_url", value) },
+   clear = function() { .rs.clearUserPref("ai_provider_2_base_url") }
+)
+
+# Custom Provider 2 API Key
+#
+# API key for the second custom AI provider.
+.rs.uiPrefs$aiProvider2ApiKey <- list(
+   get = function() { .rs.getUserPref("ai_provider_2_api_key") },
+   set = function(value) { .rs.setUserPref("ai_provider_2_api_key", value) },
+   clear = function() { .rs.clearUserPref("ai_provider_2_api_key") }
+)
+
+# Custom Provider 2 Model
+#
+# Model ID for the second custom AI provider.
+.rs.uiPrefs$aiProvider2Model <- list(
+   get = function() { .rs.getUserPref("ai_provider_2_model") },
+   set = function(value) { .rs.setUserPref("ai_provider_2_model", value) },
+   clear = function() { .rs.clearUserPref("ai_provider_2_model") }
+)
+
+# Custom Provider 2 Context Window
+#
+# Maximum context window size in tokens for the second custom AI provider.
+.rs.uiPrefs$aiProvider2ContextWindow <- list(
+   get = function() { .rs.getUserPref("ai_provider_2_context_window") },
+   set = function(value) { .rs.setUserPref("ai_provider_2_context_window", value) },
+   clear = function() { .rs.clearUserPref("ai_provider_2_context_window") }
+)
+
+# Custom Provider 3 Name
+#
+# Display name for the third custom AI provider.
+.rs.uiPrefs$aiProvider3Name <- list(
+   get = function() { .rs.getUserPref("ai_provider_3_name") },
+   set = function(value) { .rs.setUserPref("ai_provider_3_name", value) },
+   clear = function() { .rs.clearUserPref("ai_provider_3_name") }
+)
+
+# Custom Provider 3 Base URL
+#
+# Base URL for the third custom AI provider.
+.rs.uiPrefs$aiProvider3BaseUrl <- list(
+   get = function() { .rs.getUserPref("ai_provider_3_base_url") },
+   set = function(value) { .rs.setUserPref("ai_provider_3_base_url", value) },
+   clear = function() { .rs.clearUserPref("ai_provider_3_base_url") }
+)
+
+# Custom Provider 3 API Key
+#
+# API key for the third custom AI provider.
+.rs.uiPrefs$aiProvider3ApiKey <- list(
+   get = function() { .rs.getUserPref("ai_provider_3_api_key") },
+   set = function(value) { .rs.setUserPref("ai_provider_3_api_key", value) },
+   clear = function() { .rs.clearUserPref("ai_provider_3_api_key") }
+)
+
+# Custom Provider 3 Model
+#
+# Model ID for the third custom AI provider.
+.rs.uiPrefs$aiProvider3Model <- list(
+   get = function() { .rs.getUserPref("ai_provider_3_model") },
+   set = function(value) { .rs.setUserPref("ai_provider_3_model", value) },
+   clear = function() { .rs.clearUserPref("ai_provider_3_model") }
+)
+
+# Custom Provider 3 Context Window
+#
+# Maximum context window size in tokens for the third custom AI provider.
+.rs.uiPrefs$aiProvider3ContextWindow <- list(
+   get = function() { .rs.getUserPref("ai_provider_3_context_window") },
+   set = function(value) { .rs.setUserPref("ai_provider_3_context_window", value) },
+   clear = function() { .rs.clearUserPref("ai_provider_3_context_window") }
+)
+
 # Show code suggestions:
 #
 # Control when code suggestions are displayed in the editor.

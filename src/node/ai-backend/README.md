@@ -90,21 +90,26 @@ Before any `run_r_code` runs, the code is classified:
 ### RStudio JSON-RPC channel
 
 Tools are executed by calling RStudio over an LSP-style (Content-Length framed)
-JSON-RPC channel on the process's **stdin/stdout** (stdout is reserved for this;
-logs and the port marker go to stderr). RStudio must answer these methods:
+JSON-RPC channel on the process's **stdin/stdout** (stdout is reserved for the
+frames; logs and the port marker go to stderr). The RStudio C++ session side
+(`src/cpp/session/modules/SessionChat.cpp`) implements the peer end and answers:
 
-| Method | Direction | Result |
+| Method | Params | Result |
 | --- | --- | --- |
-| `runtime/getDetailedContext` | backend -> RStudio | session info, open files, workspace variables |
-| `runtime/executeCode` | backend -> RStudio | `{ output, error }` from running R code |
-| `workspace/insertAtCursor` | backend -> RStudio | `{ success }` |
-| `workspace/insertIntoNewFile` | backend -> RStudio | `{ success }` |
+| `protocol/getVersion` | `{ clientProtocolVersion, clientVersion, capabilities }` | `{ protocolVersion, rstudioVersion, capabilities }` |
+| `runtime/getDetailedContext` | _none_ | `{ session{ version, sessionId, variables[], variablesMeta }, openFiles[], platformInfo }` |
+| `runtime/executeCode` | `{ language: "r", code, trackingId, options }` | `{ output, error, canceled, plots, executionTime }` |
+| `workspace/insertAtCursor` | `{ content }` | `{ success }` |
+| `workspace/insertIntoNewFile` | `{ content, languageId }` | `{ success }` |
 
-The backend treats RStudio as connected once it receives any valid framed
-message on stdin (the client initializes first), and degrades gracefully to
-plain chat when no peer is present. **`runtime/executeCode` is the one method
-the RStudio C++ session side still needs to implement** for live execution;
-everything else (the loop, guardrails, protocol) is complete and tested here.
+RStudio's C++ side is purely reactive (it never sends an unsolicited message),
+so on startup the backend initiates a `protocol/getVersion` handshake. The reply
+both marks RStudio connected (enabling the tool loop) and reports RStudio's
+capabilities -- tools whose underlying method is unsupported are not offered.
+When capabilities are omitted, full compatibility is assumed. With no peer
+(standalone / tests) the handshake simply times out and the backend stays in
+plain-chat mode. The protocol version (`10.0`) tracks
+`src/cpp/session/modules/chat/ChatConstants.cpp`.
 
 ## Using it with RStudio
 

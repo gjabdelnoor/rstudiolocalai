@@ -155,6 +155,22 @@ let stdinBuffer = Buffer.alloc(0);
 // for RStudio capabilities that will never answer.
 let rstudioConnected = false;
 
+// The JSON-RPC methods RStudio reports it supports (from the protocol/getVersion
+// handshake), or null if not yet known. When known, tools are filtered to those
+// RStudio can actually service; when unknown, we assume full compatibility
+// (mirrors RStudio's own behavior when a peer omits capabilities).
+let rstudioCapabilities = null;
+
+// Protocol version + capabilities we advertise to RStudio during the handshake.
+// Must track src/cpp/session/modules/chat/ChatConstants.cpp (kProtocolVersion).
+const PROTOCOL_VERSION = '10.0';
+const BACKEND_CAPABILITIES = [
+   'runtime/getDetailedContext',
+   'runtime/executeCode',
+   'workspace/insertAtCursor',
+   'workspace/insertIntoNewFile'
+];
+
 function indexOfCRLFCRLF(buf)
 {
    for (let i = 0; i < buf.length - 3; i++)
@@ -229,6 +245,8 @@ if (process.stdin && !process.stdin.isTTY)
       parseStdinMessages();
    });
    process.stdin.resume();
+   // Kick off the handshake on the next tick (after callRStudio is defined).
+   setImmediate(performHandshake);
 }
 
 // Write a JSON-RPC request to stdout (to RStudio) and return a Promise that
@@ -260,6 +278,29 @@ function callRStudio(method, params, timeoutMs)
          reject(new Error(`Failed to write to stdout: ${e.message}`));
       }
    });
+}
+
+// Announce ourselves to RStudio and learn what it can do. RStudio's C++ side is
+// purely reactive -- it never sends an unsolicited message -- so the backend
+// must initiate. The reply ({ protocolVersion, rstudioVersion, capabilities })
+// also flips rstudioConnected (any framed reply does, via parseStdinMessages),
+// which is what enables the tool loop. In standalone/test mode nothing answers
+// and this simply times out, leaving us in plain-chat mode.
+function performHandshake()
+{
+   callRStudio('protocol/getVersion', {
+      clientProtocolVersion: PROTOCOL_VERSION,
+      clientVersion: PROTOCOL_VERSION,
+      capabilities: BACKEND_CAPABILITIES
+   }, 10000)
+      .then((res) =>
+      {
+         if (res && Array.isArray(res.capabilities))
+            rstudioCapabilities = new Set(res.capabilities);
+         log('INFO', `RStudio handshake OK (protocol ${res && res.protocolVersion}, ` +
+            `${rstudioCapabilities ? rstudioCapabilities.size : 0} capabilities)`);
+      })
+      .catch((e) => { log('DEBUG', `No RStudio handshake (standalone mode?): ${e.message}`); });
 }
 
 // Format the getDetailedContext response into a compact system-prompt addendum.
@@ -376,6 +417,22 @@ const R_TOOLS = [
    }
 ];
 
+// Each tool's underlying RStudio capability (JSON-RPC method).
+const TOOL_REQUIRES = {
+   run_r_code: 'runtime/executeCode',
+   inspect_data: 'runtime/executeCode',
+   read_workspace: 'runtime/getDetailedContext'
+};
+
+// The tool set to offer the model: all tools when RStudio's capabilities are
+// unknown (assume full compatibility), otherwise only those it can service.
+function toolsForRStudio()
+{
+   if (!rstudioCapabilities) return R_TOOLS;
+   const list = R_TOOLS.filter((t) => rstudioCapabilities.has(TOOL_REQUIRES[t.function.name]));
+   return list.length ? list : null;
+}
+
 // Classify R code for destructive side effects.
 // Returns { level: 'allow' | 'confirm' | 'block', reason }.
 //   block   - never run automatically (catastrophic / irreversible system harm)
@@ -483,7 +540,12 @@ async function executeToolCall(ws, requestId, call)
       ws.sendJSON({ type: 'toolCall', requestId, callId: call.id, tool: name, code });
       try
       {
-         const res = await callRStudio('runtime/executeCode', { code }, 120000);
+         const res = await callRStudio('runtime/executeCode', {
+            language: 'r',
+            code,
+            trackingId: 'tool_' + (rpcIdCounter++),
+            options: { captureOutput: true }
+         }, 120000);
          const out = formatExecResult(res);
          ws.sendJSON({ type: 'toolResult', requestId, callId: call.id, tool: name, ok: true });
          return out.slice(0, 16000);
@@ -508,7 +570,12 @@ async function executeToolCall(ws, requestId, call)
          `cat("--- head ---\\n"); print(utils::head(${objName}))`;
       try
       {
-         const res = await callRStudio('runtime/executeCode', { code: probe }, 30000);
+         const res = await callRStudio('runtime/executeCode', {
+            language: 'r',
+            code: probe,
+            trackingId: 'tool_' + (rpcIdCounter++),
+            options: { captureOutput: true }
+         }, 30000);
          ws.sendJSON({ type: 'toolResult', requestId, callId: call.id, tool: name, ok: true });
          return formatExecResult(res).slice(0, 16000);
       }
@@ -1115,8 +1182,9 @@ async function streamCompletion(ws, requestId, history, cfg)
    }
 
    // Tools can only run when RStudio is connected to execute them. Without a
-   // peer, fall back to plain chat (preserves standalone/test behavior).
-   const tools = rstudioConnected ? R_TOOLS : null;
+   // peer, fall back to plain chat (preserves standalone/test behavior). When
+   // RStudio reported its capabilities, only offer tools it can service.
+   const tools = rstudioConnected ? toolsForRStudio() : null;
    const messages = buildMessages(history, cfg, contextStr);
 
    const controller = new AbortController();

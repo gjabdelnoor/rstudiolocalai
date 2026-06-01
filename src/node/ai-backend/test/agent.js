@@ -103,7 +103,7 @@ function parseServerFrame(buf) {
 
 // --- Fake RStudio JSON-RPC peer over the backend's stdin/stdout ----------
 function attachRStudioPeer(child, handlers) {
-   const peer = { executeCalls: [], contextCalls: 0 };
+   const peer = { executeCalls: [], executeParams: [], contextCalls: 0, handshakeParams: null };
    let buf = Buffer.alloc(0);
 
    function writeFrame(obj) {
@@ -133,12 +133,22 @@ function attachRStudioPeer(child, handlers) {
       }
    });
 
-   // Send an initial notification so the backend marks RStudio as connected.
-   writeFrame({ jsonrpc: '2.0', method: 'initialized', params: {} });
+   // No unsolicited frames: like the real RStudio C++ side, this peer is purely
+   // reactive. The backend initiates the protocol/getVersion handshake, whose
+   // reply is what marks it connected.
    return peer;
 }
 
+const RSTUDIO_CAPS = [
+   'runtime/getActiveSession', 'runtime/getDetailedContext', 'runtime/executeCode',
+   'runtime/getConsoleContent', 'workspace/insertIntoNewFile', 'workspace/insertAtCursor'
+];
+
 const DEFAULT_HANDLERS = {
+   'protocol/getVersion': (params, peer) => {
+      peer.handshakeParams = params;
+      return { protocolVersion: '10.0', rstudioVersion: 'test', capabilities: RSTUDIO_CAPS };
+   },
    'runtime/getDetailedContext': (params, peer) => {
       peer.contextCalls++;
       return {
@@ -150,7 +160,8 @@ const DEFAULT_HANDLERS = {
    },
    'runtime/executeCode': (params, peer) => {
       peer.executeCalls.push(params.code);
-      return { output: 'OK: ' + (params.code || '').slice(0, 40) };
+      peer.executeParams.push(params);
+      return { output: 'OK: ' + (params.code || '').slice(0, 40), error: '' };
    }
 };
 
@@ -222,9 +233,14 @@ async function scenario(name, { script, decision }) {
             { content: 'The data has 32 rows.' }
          ]
       });
+      check('A: backend performed protocol/getVersion handshake', !!peer.handshakeParams);
+      check('A: handshake advertised the protocol version', !!peer.handshakeParams && peer.handshakeParams.clientProtocolVersion === '10.0');
       check('A: safe code did NOT prompt for confirmation', !msgs.some((m) => m.type === 'confirmRequired'));
       check('A: run_r_code tool call surfaced to client', msgs.some((m) => m.type === 'toolCall' && m.tool === 'run_r_code'));
       check('A: code was executed in the R session', peer.executeCalls.includes('summary(mtcars)'));
+      const ep = peer.executeParams[0] || {};
+      check('A: executeCode used language "r"', ep.language === 'r');
+      check('A: executeCode included a trackingId', typeof ep.trackingId === 'string' && ep.trackingId.length > 0);
       check('A: final answer streamed after the tool', assembleText(msgs).indexOf('32 rows') !== -1);
       check('A: turn ended with done', msgs.some((m) => m.type === 'done'));
    }

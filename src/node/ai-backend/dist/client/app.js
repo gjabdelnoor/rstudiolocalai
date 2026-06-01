@@ -5,6 +5,12 @@
  * The WebSocket URL and per-session auth token are provided by RStudio via
  * the iframe URL hash (#ws=...&token=...). When the page is served directly
  * by the backend (standalone / testing), both are derived from the location.
+ *
+ * Features:
+ *  - Streaming chat with OpenAI-compatible backends
+ *  - Thinking token filtering (collapsed in <details>, never raw)
+ *  - "Insert at cursor" and "New file" buttons on every code block
+ *  - RStudio theme integration via CSS custom properties
  */
 (function () {
    'use strict';
@@ -110,11 +116,21 @@
          if (i % 2 === 1) {
             // Code block. First line may be a language hint.
             var block = parts[i];
+            var lang = '';
             var nl = block.indexOf('\n');
-            if (nl !== -1 && /^[a-zA-Z0-9_+-]*$/.test(block.slice(0, nl).trim())) {
+            if (nl !== -1 && /^[a-zA-Z0-9_+\-.]*$/.test(block.slice(0, nl).trim())) {
+               lang = block.slice(0, nl).trim().toLowerCase();
                block = block.slice(nl + 1);
             }
-            html += '<pre><code>' + escapeHtml(block.replace(/\n$/, '')) + '</code></pre>';
+            var code = block.replace(/\n$/, '');
+            html += '<div class="code-block">';
+            if (lang) html += '<div class="code-lang">' + escapeHtml(lang) + '</div>';
+            html += '<pre><code>' + escapeHtml(code) + '</code></pre>';
+            html += '<div class="code-actions">';
+            html += '<button class="code-btn insert-cursor-btn" title="Insert code at cursor position in active editor">&#x2193; Insert</button>';
+            html += '<button class="code-btn new-file-btn" title="Open code in a new editor tab">+ New File</button>';
+            html += '</div>';
+            html += '</div>';
          } else {
             var paras = escapeHtml(parts[i]).split(/\n{2,}/);
             for (var p = 0; p < paras.length; p++) {
@@ -143,8 +159,10 @@
 
       if (role === 'assistant') {
          var thinking = document.createElement('details');
-         thinking.className = 'thinking hidden' + (settings.interleavedThinking ? ' interleaved' : '');
-         if (settings.interleavedThinking) thinking.open = true;
+         // Always collapsed by default -- thinking tokens can be 3000+ tokens.
+         // User can expand by clicking the "Reasoning" summary.
+         thinking.className = 'thinking hidden';
+         thinking.open = false;
          var summary = document.createElement('summary');
          summary.textContent = 'Reasoning';
          var thinkingBody = document.createElement('div');
@@ -170,6 +188,37 @@
       scrollToBottom();
       return refs;
    }
+
+   // --- Insert-at-cursor / new-file (event delegation on message list) ---
+   elMessages.addEventListener('click', function (e) {
+      var btn = e.target;
+      if (!btn || !btn.classList || !btn.classList.contains('code-btn')) return;
+      var codeBlock = btn.closest ? btn.closest('.code-block') : null;
+      if (!codeBlock) {
+         // IE fallback: walk up
+         var el = btn.parentElement;
+         while (el && !el.classList.contains('code-block')) el = el.parentElement;
+         codeBlock = el;
+      }
+      if (!codeBlock) return;
+      var codeEl = codeBlock.querySelector('code');
+      if (!codeEl) return;
+      var code = codeEl.textContent;
+      if (!code || !ws || !connected) return;
+
+      if (btn.classList.contains('insert-cursor-btn')) {
+         ws.send(JSON.stringify({ type: 'insertAtCursor', code: code }));
+         btn.textContent = '...';
+         btn.disabled = true;
+      } else if (btn.classList.contains('new-file-btn')) {
+         // Detect language from the code-lang sibling div if present
+         var langEl = codeBlock.querySelector('.code-lang');
+         var lang = langEl ? langEl.textContent : '';
+         ws.send(JSON.stringify({ type: 'insertIntoNewFile', code: code, language: lang }));
+         btn.textContent = '...';
+         btn.disabled = true;
+      }
+   });
 
    // --- Connection status ------------------------------------------------
    function setStatus(state, text) {
@@ -232,7 +281,7 @@
          case 'ready':
             configured = !!msg.configured;
             settings = msg;
-            elModelName.textContent = msg.model ? (msg.model) : '';
+            elModelName.textContent = msg.model ? msg.model : '';
             updateConfiguredUI();
             break;
          case 'thinking':
@@ -247,12 +296,40 @@
          case 'error':
             if (!msg.requestId || msg.requestId === activeRequestId) handleError(msg.message);
             break;
+         case 'insertResult':
+            handleInsertResult(msg);
+            break;
+      }
+   }
+
+   function handleInsertResult(msg) {
+      // Re-enable any disabled insert buttons (find the most recently disabled one)
+      var btns = elMessages.querySelectorAll('.code-btn[disabled]');
+      for (var i = 0; i < btns.length; i++) {
+         var btn = btns[i];
+         btn.disabled = false;
+         if (msg.action === 'cursor') {
+            btn.textContent = msg.success ? 'Inserted!' : 'Failed';
+         } else if (msg.action === 'newfile') {
+            btn.textContent = msg.success ? 'Opened!' : 'Failed';
+         } else {
+            btn.textContent = msg.success ? 'Done' : 'Failed';
+         }
+         // Restore original label after a moment
+         setTimeout(function (b) {
+            return function () {
+               if (b.classList.contains('insert-cursor-btn')) b.textContent = '↓ Insert';
+               else if (b.classList.contains('new-file-btn')) b.textContent = '+ New File';
+            };
+         }(btn), 2000);
       }
    }
 
    function appendThinking(text) {
+      if (!activeAssistant) return;
       activeAssistant.thinkingText += text;
       activeAssistant.thinkingBodyEl.textContent = activeAssistant.thinkingText;
+      // Show the collapsed details element -- user must click to expand
       activeAssistant.thinkingEl.classList.remove('hidden');
       scrollToBottom();
    }
@@ -310,6 +387,7 @@
       };
 
       elSend.disabled = true;
+      elInput.disabled = false; // keep input enabled so user can prepare next message
       elStop.classList.remove('hidden');
 
       ws.send(JSON.stringify({

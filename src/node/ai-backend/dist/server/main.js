@@ -18,6 +18,12 @@
  *   RSTUDIO_AI_MAX_CONTEXT          integer    - max context window (tokens)
  *   RSTUDIO_CHAT_AUTH_TOKEN         per-session WebSocket auth token
  *
+ * Communication with the RStudio C++ backend uses stdin/stdout with LSP-style
+ * Content-Length framing (same as the Language Server Protocol). The backend
+ * writes JSON-RPC 2.0 requests to stdout; RStudio responds via stdin. This
+ * enables the backend to call RStudio capabilities like runtime/getDetailedContext
+ * and workspace/insertAtCursor.
+ *
  * The backend is intentionally dependency-free: it uses only Node built-ins
  * plus the global fetch() available in Node 18+, so it can be dropped into an
  * installation tree and run without `npm install`.
@@ -125,6 +131,169 @@ function isConfigured(cfg)
 }
 
 const AUTH_TOKEN = process.env.RSTUDIO_CHAT_AUTH_TOKEN || '';
+
+// ---------------------------------------------------------------------------
+// RStudio stdin/stdout JSON-RPC (LSP-style Content-Length framing)
+//
+// RStudio (C++) sends JSON-RPC responses to the backend via stdin.
+// The backend sends JSON-RPC requests to RStudio via stdout.
+// Format: "Content-Length: N\r\n\r\n{json body}"
+//
+// This channel enables calling RStudio capabilities such as:
+//   runtime/getDetailedContext  - code + R workspace context
+//   workspace/insertAtCursor    - insert generated code at cursor
+//   workspace/insertIntoNewFile - create a new document with code
+// ---------------------------------------------------------------------------
+
+const pendingRStudioRequests = new Map(); // id -> { resolve, reject, timer }
+let rpcIdCounter = 1;
+let stdinBuffer = Buffer.alloc(0);
+
+function indexOfCRLFCRLF(buf)
+{
+   for (let i = 0; i < buf.length - 3; i++)
+   {
+      if (buf[i] === 0x0d && buf[i + 1] === 0x0a &&
+          buf[i + 2] === 0x0d && buf[i + 3] === 0x0a)
+         return i;
+   }
+   return -1;
+}
+
+function parseStdinMessages()
+{
+   for (;;)
+   {
+      const sep = indexOfCRLFCRLF(stdinBuffer);
+      if (sep === -1) break;
+
+      const headerBlock = stdinBuffer.slice(0, sep).toString('utf8');
+      const clMatch = /Content-Length:\s*(\d+)/i.exec(headerBlock);
+      if (!clMatch)
+      {
+         stdinBuffer = stdinBuffer.slice(sep + 4);
+         continue;
+      }
+
+      const contentLength = parseInt(clMatch[1], 10);
+      if (contentLength <= 0) { stdinBuffer = stdinBuffer.slice(sep + 4); continue; }
+
+      const bodyStart = sep + 4;
+      const bodyEnd = bodyStart + contentLength;
+      if (stdinBuffer.length < bodyEnd) break;
+
+      const body = stdinBuffer.slice(bodyStart, bodyEnd).toString('utf8');
+      stdinBuffer = stdinBuffer.slice(bodyEnd);
+
+      let msg;
+      try { msg = JSON.parse(body); }
+      catch (e) { log('WARN', `Failed to parse stdin JSON-RPC: ${e.message}`); continue; }
+
+      // Match the response to a pending callRStudio() promise
+      if (msg.id !== undefined && msg.id !== null)
+      {
+         const pending = pendingRStudioRequests.get(msg.id);
+         if (pending)
+         {
+            pendingRStudioRequests.delete(msg.id);
+            clearTimeout(pending.timer);
+            if (msg.error)
+               pending.reject(new Error(`RStudio RPC error: ${JSON.stringify(msg.error)}`));
+            else
+               pending.resolve(msg.result);
+         }
+      }
+   }
+}
+
+// Arm the stdin reader only when running under RStudio (stdin is a pipe).
+// In standalone/test mode stdin may not exist or may be a TTY.
+if (process.stdin && !process.stdin.isTTY)
+{
+   process.stdin.on('data', (chunk) =>
+   {
+      stdinBuffer = Buffer.concat([stdinBuffer, chunk]);
+      parseStdinMessages();
+   });
+   process.stdin.resume();
+}
+
+// Write a JSON-RPC request to stdout (to RStudio) and return a Promise that
+// resolves with the result or rejects on error/timeout.
+function callRStudio(method, params, timeoutMs)
+{
+   timeoutMs = timeoutMs || 5000;
+   return new Promise((resolve, reject) =>
+   {
+      const id = rpcIdCounter++;
+      const timer = setTimeout(() =>
+      {
+         if (pendingRStudioRequests.has(id))
+         {
+            pendingRStudioRequests.delete(id);
+            reject(new Error(`RStudio RPC timeout: ${method}`));
+         }
+      }, timeoutMs);
+
+      pendingRStudioRequests.set(id, { resolve, reject, timer });
+
+      const body = JSON.stringify({ jsonrpc: '2.0', id, method, params: params || {} });
+      const frame = `Content-Length: ${Buffer.byteLength(body, 'utf8')}\r\n\r\n${body}`;
+      try { process.stdout.write(frame); }
+      catch (e)
+      {
+         pendingRStudioRequests.delete(id);
+         clearTimeout(timer);
+         reject(new Error(`Failed to write to stdout: ${e.message}`));
+      }
+   });
+}
+
+// Format the getDetailedContext response into a compact system-prompt addendum.
+function formatRStudioContext(ctx)
+{
+   if (!ctx || typeof ctx !== 'object') return null;
+   const lines = [];
+
+   if (ctx.session)
+   {
+      const s = ctx.session;
+      lines.push(`R ${s.version || '?'} | session ${(s.sessionId || '').slice(0, 8)}`);
+   }
+
+   if (Array.isArray(ctx.openFiles) && ctx.openFiles.length)
+   {
+      const fileParts = ctx.openFiles.map((f) =>
+      {
+         let name = f.uri ? f.uri.replace(/^.*[/\\]/, '') : 'file';
+         if (f.uri && f.uri.startsWith('untitled:')) name = 'Untitled';
+         let info = f.isActiveEditor ? `**${name}** (active` : name;
+         if (f.isActiveEditor)
+         {
+            if (Array.isArray(f.selections) && f.selections.length)
+               info += `, line ${(f.selections[0].line || 0) + 1}`;
+            info += ')';
+         }
+         if (f.isModified) info += '[+]';
+         return info;
+      });
+      lines.push(`Files: ${fileParts.join(', ')}`);
+   }
+
+   if (ctx.session && Array.isArray(ctx.session.variables) && ctx.session.variables.length)
+   {
+      const vars = ctx.session.variables.slice(0, 15).map((v) => `${v.name} (${v.type})`);
+      lines.push(`Workspace: ${vars.join(', ')}`);
+      const meta = ctx.session.variablesMeta;
+      if (meta && meta.totalCount > 15)
+         lines.push(`  ...${meta.totalCount - 15} more variables`);
+   }
+
+   if (ctx.platformInfo && ctx.platformInfo.currentDate)
+      lines.push(`Date: ${ctx.platformInfo.currentDate}`);
+
+   return lines.length ? lines.join('\n') : null;
+}
 
 // ---------------------------------------------------------------------------
 // Minimal WebSocket server (RFC 6455), no external dependencies
@@ -427,13 +596,17 @@ function estimateTokens(text)
    return Math.ceil((text ? text.length : 0) / 4) + 4;
 }
 
-function buildMessages(history, cfg)
+function buildMessages(history, cfg, contextStr)
 {
-   const system = { role: 'system', content: SYSTEM_PROMPT };
+   let systemContent = SYSTEM_PROMPT;
+   if (contextStr)
+      systemContent += '\n\n## Current RStudio Context\n' + contextStr;
+
+   const system = { role: 'system', content: systemContent };
 
    // Reserve part of the window for the model's reply.
    const reserve = Math.min(Math.floor(cfg.maxContext / 4), 4096);
-   let budget = Math.max(cfg.maxContext - reserve - estimateTokens(SYSTEM_PROMPT), 512);
+   let budget = Math.max(cfg.maxContext - reserve - estimateTokens(systemContent), 512);
 
    const kept = [];
    for (let i = history.length - 1; i >= 0; i--)
@@ -449,11 +622,11 @@ function buildMessages(history, cfg)
    return [system, ...kept];
 }
 
-function buildRequestBody(history, cfg)
+function buildRequestBody(history, cfg, contextStr)
 {
    const body = {
       model: cfg.model,
-      messages: buildMessages(history, cfg),
+      messages: buildMessages(history, cfg, contextStr),
       stream: true
    };
    if (cfg.thinking)
@@ -468,6 +641,19 @@ function buildRequestBody(history, cfg)
 // Stream a completion to the given WebSocket connection.
 async function streamCompletion(ws, requestId, history, cfg)
 {
+   // Fetch RStudio context (open files, R workspace, cursor position).
+   // Fail gracefully -- missing context is better than a broken chat.
+   let contextStr = null;
+   try
+   {
+      const ctx = await callRStudio('runtime/getDetailedContext', {}, 4000);
+      contextStr = formatRStudioContext(ctx);
+   }
+   catch (e)
+   {
+      log('DEBUG', `Could not fetch RStudio context: ${e.message}`);
+   }
+
    const url = cfg.baseUrl + '/chat/completions';
    const headers = { 'Content-Type': 'application/json' };
    if (cfg.apiKey) headers['Authorization'] = 'Bearer ' + cfg.apiKey;
@@ -475,6 +661,76 @@ async function streamCompletion(ws, requestId, history, cfg)
    const controller = new AbortController();
    const onClose = () => controller.abort();
    ws.on('close', onClose);
+
+   // Per-request streaming state for filtering embedded <thinking> XML tags.
+   // Some OpenAI-compatible providers (e.g. Claude via LiteLLM without tag
+   // stripping) include thinking in <thinking>...</thinking> blocks within
+   // delta.content instead of delta.reasoning_content.
+   let inThinkingTag = false;
+   let partialTagBuf = '';
+
+   function processContentChunk(text)
+   {
+      let textOut = '';
+      let thinkingOut = '';
+      let combined = partialTagBuf + text;
+      partialTagBuf = '';
+
+      while (combined.length > 0)
+      {
+         if (inThinkingTag)
+         {
+            const closeIdx = combined.indexOf('</thinking>');
+            if (closeIdx !== -1)
+            {
+               thinkingOut += combined.slice(0, closeIdx);
+               combined = combined.slice(closeIdx + '</thinking>'.length);
+               inThinkingTag = false;
+            }
+            else
+            {
+               thinkingOut += combined;
+               combined = '';
+            }
+         }
+         else
+         {
+            const openIdx = combined.indexOf('<thinking>');
+            if (openIdx !== -1)
+            {
+               textOut += combined.slice(0, openIdx);
+               combined = combined.slice(openIdx + '<thinking>'.length);
+               inThinkingTag = true;
+            }
+            else
+            {
+               // Check for a partial '<thinking>' tag at the tail.
+               const maxLen = '<thinking>'.length - 1;
+               let partialIdx = -1;
+               for (let i = Math.max(0, combined.length - maxLen); i < combined.length; i++)
+               {
+                  if ('<thinking>'.startsWith(combined.slice(i)))
+                  {
+                     partialIdx = i;
+                     break;
+                  }
+               }
+               if (partialIdx !== -1)
+               {
+                  textOut += combined.slice(0, partialIdx);
+                  partialTagBuf = combined.slice(partialIdx);
+               }
+               else
+               {
+                  textOut += combined;
+               }
+               combined = '';
+            }
+         }
+      }
+
+      return { text: textOut, thinking: thinkingOut };
+   }
 
    let reader = null;
    try
@@ -485,7 +741,7 @@ async function streamCompletion(ws, requestId, history, cfg)
          resp = await fetch(url, {
             method: 'POST',
             headers,
-            body: JSON.stringify(buildRequestBody(history, cfg)),
+            body: JSON.stringify(buildRequestBody(history, cfg, contextStr)),
             signal: controller.signal
          });
       }
@@ -515,12 +771,20 @@ async function streamCompletion(ws, requestId, history, cfg)
          const choice = json.choices && json.choices[0];
          if (!choice) return true;
          const delta = choice.delta || {};
-         // Reasoning content is exposed under different keys by different providers.
+
+         // Reasoning content via dedicated fields (OpenAI o-series, DeepSeek, etc.)
          const reasoning = delta.reasoning_content || delta.reasoning;
-         if (reasoning && cfg.thinking)
+         if (reasoning)
             ws.sendJSON({ type: 'thinking', requestId, content: reasoning });
+
          if (typeof delta.content === 'string' && delta.content.length)
-            ws.sendJSON({ type: 'delta', requestId, content: delta.content });
+         {
+            const { text, thinking } = processContentChunk(delta.content);
+            if (thinking)
+               ws.sendJSON({ type: 'thinking', requestId, content: thinking });
+            if (text)
+               ws.sendJSON({ type: 'delta', requestId, content: text });
+         }
          return true;
       };
 
@@ -604,6 +868,41 @@ function handleConnection(ws)
          streamCompletion(ws, msg.requestId, history, current);
          return;
       }
+
+      // Insert generated code at the cursor position in the focused editor.
+      if (msg.type === 'insertAtCursor')
+      {
+         const code = typeof msg.code === 'string' ? msg.code : '';
+         if (!code) { ws.sendJSON({ type: 'insertResult', success: false, message: 'No code provided' }); return; }
+         callRStudio('workspace/insertAtCursor', { content: code }, 5000)
+            .then((result) =>
+            {
+               ws.sendJSON({ type: 'insertResult', success: !!(result && result.success), action: 'cursor' });
+            })
+            .catch((e) =>
+            {
+               ws.sendJSON({ type: 'insertResult', success: false, message: e.message, action: 'cursor' });
+            });
+         return;
+      }
+
+      // Insert generated code into a new untitled document.
+      if (msg.type === 'insertIntoNewFile')
+      {
+         const code = typeof msg.code === 'string' ? msg.code : '';
+         const language = typeof msg.language === 'string' ? msg.language : '';
+         if (!code) { ws.sendJSON({ type: 'insertResult', success: false, message: 'No code provided' }); return; }
+         callRStudio('workspace/insertIntoNewFile', { content: code, languageId: language }, 5000)
+            .then((result) =>
+            {
+               ws.sendJSON({ type: 'insertResult', success: !!(result && result.success), action: 'newfile' });
+            })
+            .catch((e) =>
+            {
+               ws.sendJSON({ type: 'insertResult', success: false, message: e.message, action: 'newfile' });
+            });
+         return;
+      }
    });
 }
 
@@ -672,8 +971,9 @@ server.listen(ARGS.port, ARGS.host, () =>
    log('INFO', `RStudio AI backend listening on ${ARGS.host}:${addr.port} ` +
        `(mode=${ARGS.serverMode ? 'server' : 'desktop'}, configured=${isConfigured(cfg)}, ` +
        `model=${cfg.model}, baseUrl=${cfg.baseUrl})`);
-   // Emit a machine-readable line so callers/tests can discover the port.
-   process.stdout.write(`RSTUDIO_AI_BACKEND_LISTENING ${addr.port}\n`);
+   // Emit a machine-readable port marker to stderr (used by tests/standalone tools).
+   // Stdout is reserved for the LSP-style JSON-RPC channel to RStudio.
+   process.stderr.write(`RSTUDIO_AI_BACKEND_LISTENING ${addr.port}\n`);
 });
 
 process.on('SIGTERM', () => { try { server.close(); } catch (e) {} process.exit(0); });

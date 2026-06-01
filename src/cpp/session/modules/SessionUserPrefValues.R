@@ -2499,6 +2499,25 @@
    clear = function() { .rs.clearUserPref("ai_provider_1_context_window") }
 )
 
+# Custom Provider 1 Thinking
+#
+# Enable reasoning/thinking output for the first custom AI provider.
+.rs.uiPrefs$aiProvider1ThinkingEnabled <- list(
+   get = function() { .rs.getUserPref("ai_provider_1_thinking_enabled") },
+   set = function(value) { .rs.setUserPref("ai_provider_1_thinking_enabled", value) },
+   clear = function() { .rs.clearUserPref("ai_provider_1_thinking_enabled") }
+)
+
+# Custom Provider 1 Vision
+#
+# Enable vision capabilities for the first custom AI provider (chart/image
+# analysis).
+.rs.uiPrefs$aiProvider1VisionEnabled <- list(
+   get = function() { .rs.getUserPref("ai_provider_1_vision_enabled") },
+   set = function(value) { .rs.setUserPref("ai_provider_1_vision_enabled", value) },
+   clear = function() { .rs.clearUserPref("ai_provider_1_vision_enabled") }
+)
+
 # Custom Provider 2 Name
 #
 # Display name for the second custom AI provider.
@@ -2544,6 +2563,25 @@
    clear = function() { .rs.clearUserPref("ai_provider_2_context_window") }
 )
 
+# Custom Provider 2 Thinking
+#
+# Enable reasoning/thinking output for the second custom AI provider.
+.rs.uiPrefs$aiProvider2ThinkingEnabled <- list(
+   get = function() { .rs.getUserPref("ai_provider_2_thinking_enabled") },
+   set = function(value) { .rs.setUserPref("ai_provider_2_thinking_enabled", value) },
+   clear = function() { .rs.clearUserPref("ai_provider_2_thinking_enabled") }
+)
+
+# Custom Provider 2 Vision
+#
+# Enable vision capabilities for the second custom AI provider (chart/image
+# analysis).
+.rs.uiPrefs$aiProvider2VisionEnabled <- list(
+   get = function() { .rs.getUserPref("ai_provider_2_vision_enabled") },
+   set = function(value) { .rs.setUserPref("ai_provider_2_vision_enabled", value) },
+   clear = function() { .rs.clearUserPref("ai_provider_2_vision_enabled") }
+)
+
 # Custom Provider 3 Name
 #
 # Display name for the third custom AI provider.
@@ -2587,6 +2625,25 @@
    get = function() { .rs.getUserPref("ai_provider_3_context_window") },
    set = function(value) { .rs.setUserPref("ai_provider_3_context_window", value) },
    clear = function() { .rs.clearUserPref("ai_provider_3_context_window") }
+)
+
+# Custom Provider 3 Thinking
+#
+# Enable reasoning/thinking output for the third custom AI provider.
+.rs.uiPrefs$aiProvider3ThinkingEnabled <- list(
+   get = function() { .rs.getUserPref("ai_provider_3_thinking_enabled") },
+   set = function(value) { .rs.setUserPref("ai_provider_3_thinking_enabled", value) },
+   clear = function() { .rs.clearUserPref("ai_provider_3_thinking_enabled") }
+)
+
+# Custom Provider 3 Vision
+#
+# Enable vision capabilities for the third custom AI provider (chart/image
+# analysis).
+.rs.uiPrefs$aiProvider3VisionEnabled <- list(
+   get = function() { .rs.getUserPref("ai_provider_3_vision_enabled") },
+   set = function(value) { .rs.setUserPref("ai_provider_3_vision_enabled", value) },
+   clear = function() { .rs.clearUserPref("ai_provider_3_vision_enabled") }
 )
 
 # Show code suggestions:

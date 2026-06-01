@@ -4853,6 +4853,8 @@ Error startChatBackend(bool resumeConversation)
       int idx = getCustomProviderIndex();
       std::string baseUrl, apiKey, model;
       int contextWindow = 8192;
+      bool thinkingEnabled = false;
+      bool visionEnabled = false;
       switch (idx)
       {
          case 1:
@@ -4860,18 +4862,24 @@ Error startChatBackend(bool resumeConversation)
             apiKey = prefs::userPrefs().aiProvider1ApiKey();
             model = prefs::userPrefs().aiProvider1Model();
             contextWindow = prefs::userPrefs().aiProvider1ContextWindow();
+            thinkingEnabled = prefs::userPrefs().aiProvider1ThinkingEnabled();
+            visionEnabled = prefs::userPrefs().aiProvider1VisionEnabled();
             break;
          case 2:
             baseUrl = prefs::userPrefs().aiProvider2BaseUrl();
             apiKey = prefs::userPrefs().aiProvider2ApiKey();
             model = prefs::userPrefs().aiProvider2Model();
             contextWindow = prefs::userPrefs().aiProvider2ContextWindow();
+            thinkingEnabled = prefs::userPrefs().aiProvider2ThinkingEnabled();
+            visionEnabled = prefs::userPrefs().aiProvider2VisionEnabled();
             break;
          case 3:
             baseUrl = prefs::userPrefs().aiProvider3BaseUrl();
             apiKey = prefs::userPrefs().aiProvider3ApiKey();
             model = prefs::userPrefs().aiProvider3Model();
             contextWindow = prefs::userPrefs().aiProvider3ContextWindow();
+            thinkingEnabled = prefs::userPrefs().aiProvider3ThinkingEnabled();
+            visionEnabled = prefs::userPrefs().aiProvider3VisionEnabled();
             break;
       }
       if (!baseUrl.empty())
@@ -4882,7 +4890,12 @@ Error startChatBackend(bool resumeConversation)
          core::system::setenv(&environment, "AI_GATEWAY_API_KEY", apiKey);
          core::system::setenv(&environment, "RSTUDIO_AI_MAX_CONTEXT",
                               boost::lexical_cast<std::string>(contextWindow));
-         DLOG("Custom provider {} configured: model={}, baseUrl={}", idx, model, baseUrl);
+         core::system::setenv(&environment, "RSTUDIO_AI_THINKING",
+                              thinkingEnabled ? "1" : "0");
+         core::system::setenv(&environment, "RSTUDIO_AI_VISION",
+                              visionEnabled ? "1" : "0");
+         DLOG("Custom provider {} configured: model={}, baseUrl={}, thinking={}, vision={}",
+              idx, model, baseUrl, thinkingEnabled, visionEnabled);
       }
    }
 

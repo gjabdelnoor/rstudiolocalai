@@ -3508,6 +3508,32 @@ core::Error UserPrefValues::setAiProvider1ContextWindow(int val)
 }
 
 /**
+ * Enable reasoning/thinking output for the first custom AI provider.
+ */
+bool UserPrefValues::aiProvider1ThinkingEnabled()
+{
+   return readPref<bool>("ai_provider_1_thinking_enabled");
+}
+
+core::Error UserPrefValues::setAiProvider1ThinkingEnabled(bool val)
+{
+   return writePref("ai_provider_1_thinking_enabled", val);
+}
+
+/**
+ * Enable vision capabilities for the first custom AI provider (chart/image analysis).
+ */
+bool UserPrefValues::aiProvider1VisionEnabled()
+{
+   return readPref<bool>("ai_provider_1_vision_enabled");
+}
+
+core::Error UserPrefValues::setAiProvider1VisionEnabled(bool val)
+{
+   return writePref("ai_provider_1_vision_enabled", val);
+}
+
+/**
  * Display name for the second custom AI provider.
  */
 std::string UserPrefValues::aiProvider2Name()
@@ -3573,6 +3599,32 @@ core::Error UserPrefValues::setAiProvider2ContextWindow(int val)
 }
 
 /**
+ * Enable reasoning/thinking output for the second custom AI provider.
+ */
+bool UserPrefValues::aiProvider2ThinkingEnabled()
+{
+   return readPref<bool>("ai_provider_2_thinking_enabled");
+}
+
+core::Error UserPrefValues::setAiProvider2ThinkingEnabled(bool val)
+{
+   return writePref("ai_provider_2_thinking_enabled", val);
+}
+
+/**
+ * Enable vision capabilities for the second custom AI provider (chart/image analysis).
+ */
+bool UserPrefValues::aiProvider2VisionEnabled()
+{
+   return readPref<bool>("ai_provider_2_vision_enabled");
+}
+
+core::Error UserPrefValues::setAiProvider2VisionEnabled(bool val)
+{
+   return writePref("ai_provider_2_vision_enabled", val);
+}
+
+/**
  * Display name for the third custom AI provider.
  */
 std::string UserPrefValues::aiProvider3Name()
@@ -3635,6 +3687,32 @@ int UserPrefValues::aiProvider3ContextWindow()
 core::Error UserPrefValues::setAiProvider3ContextWindow(int val)
 {
    return writePref("ai_provider_3_context_window", val);
+}
+
+/**
+ * Enable reasoning/thinking output for the third custom AI provider.
+ */
+bool UserPrefValues::aiProvider3ThinkingEnabled()
+{
+   return readPref<bool>("ai_provider_3_thinking_enabled");
+}
+
+core::Error UserPrefValues::setAiProvider3ThinkingEnabled(bool val)
+{
+   return writePref("ai_provider_3_thinking_enabled", val);
+}
+
+/**
+ * Enable vision capabilities for the third custom AI provider (chart/image analysis).
+ */
+bool UserPrefValues::aiProvider3VisionEnabled()
+{
+   return readPref<bool>("ai_provider_3_vision_enabled");
+}
+
+core::Error UserPrefValues::setAiProvider3VisionEnabled(bool val)
+{
+   return writePref("ai_provider_3_vision_enabled", val);
 }
 
 /**
@@ -4259,16 +4337,22 @@ std::vector<std::string> UserPrefValues::allKeys()
       kAiProvider1ApiKey,
       kAiProvider1Model,
       kAiProvider1ContextWindow,
+      kAiProvider1ThinkingEnabled,
+      kAiProvider1VisionEnabled,
       kAiProvider2Name,
       kAiProvider2BaseUrl,
       kAiProvider2ApiKey,
       kAiProvider2Model,
       kAiProvider2ContextWindow,
+      kAiProvider2ThinkingEnabled,
+      kAiProvider2VisionEnabled,
       kAiProvider3Name,
       kAiProvider3BaseUrl,
       kAiProvider3ApiKey,
       kAiProvider3Model,
       kAiProvider3ContextWindow,
+      kAiProvider3ThinkingEnabled,
+      kAiProvider3VisionEnabled,
       kAssistantCompletionsTrigger,
       kAssistantCompletionsDelay,
       kAssistantTabKeyBehavior,

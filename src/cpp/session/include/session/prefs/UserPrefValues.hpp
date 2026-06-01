@@ -459,16 +459,22 @@ namespace prefs {
 #define kAiProvider1ApiKey "ai_provider_1_api_key"
 #define kAiProvider1Model "ai_provider_1_model"
 #define kAiProvider1ContextWindow "ai_provider_1_context_window"
+#define kAiProvider1ThinkingEnabled "ai_provider_1_thinking_enabled"
+#define kAiProvider1VisionEnabled "ai_provider_1_vision_enabled"
 #define kAiProvider2Name "ai_provider_2_name"
 #define kAiProvider2BaseUrl "ai_provider_2_base_url"
 #define kAiProvider2ApiKey "ai_provider_2_api_key"
 #define kAiProvider2Model "ai_provider_2_model"
 #define kAiProvider2ContextWindow "ai_provider_2_context_window"
+#define kAiProvider2ThinkingEnabled "ai_provider_2_thinking_enabled"
+#define kAiProvider2VisionEnabled "ai_provider_2_vision_enabled"
 #define kAiProvider3Name "ai_provider_3_name"
 #define kAiProvider3BaseUrl "ai_provider_3_base_url"
 #define kAiProvider3ApiKey "ai_provider_3_api_key"
 #define kAiProvider3Model "ai_provider_3_model"
 #define kAiProvider3ContextWindow "ai_provider_3_context_window"
+#define kAiProvider3ThinkingEnabled "ai_provider_3_thinking_enabled"
+#define kAiProvider3VisionEnabled "ai_provider_3_vision_enabled"
 #define kAssistantCompletionsTrigger "assistant_completions_trigger"
 #define kAssistantCompletionsTriggerAuto "auto"
 #define kAssistantCompletionsTriggerManual "manual"
@@ -2128,6 +2134,18 @@ public:
    core::Error setAiProvider1ContextWindow(int val);
 
    /**
+    * Enable reasoning/thinking output for the first custom AI provider.
+    */
+   bool aiProvider1ThinkingEnabled();
+   core::Error setAiProvider1ThinkingEnabled(bool val);
+
+   /**
+    * Enable vision capabilities for the first custom AI provider (chart/image analysis).
+    */
+   bool aiProvider1VisionEnabled();
+   core::Error setAiProvider1VisionEnabled(bool val);
+
+   /**
     * Display name for the second custom AI provider.
     */
    std::string aiProvider2Name();
@@ -2158,6 +2176,18 @@ public:
    core::Error setAiProvider2ContextWindow(int val);
 
    /**
+    * Enable reasoning/thinking output for the second custom AI provider.
+    */
+   bool aiProvider2ThinkingEnabled();
+   core::Error setAiProvider2ThinkingEnabled(bool val);
+
+   /**
+    * Enable vision capabilities for the second custom AI provider (chart/image analysis).
+    */
+   bool aiProvider2VisionEnabled();
+   core::Error setAiProvider2VisionEnabled(bool val);
+
+   /**
     * Display name for the third custom AI provider.
     */
    std::string aiProvider3Name();
@@ -2186,6 +2216,18 @@ public:
     */
    int aiProvider3ContextWindow();
    core::Error setAiProvider3ContextWindow(int val);
+
+   /**
+    * Enable reasoning/thinking output for the third custom AI provider.
+    */
+   bool aiProvider3ThinkingEnabled();
+   core::Error setAiProvider3ThinkingEnabled(bool val);
+
+   /**
+    * Enable vision capabilities for the third custom AI provider (chart/image analysis).
+    */
+   bool aiProvider3VisionEnabled();
+   core::Error setAiProvider3VisionEnabled(bool val);
 
    /**
     * Control when code suggestions are displayed in the editor.

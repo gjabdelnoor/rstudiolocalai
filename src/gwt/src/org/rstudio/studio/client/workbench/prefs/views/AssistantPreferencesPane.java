@@ -348,6 +348,8 @@ public class AssistantPreferencesPane extends PreferencesPane
             1,
             1000000,
             prefs_.aiProvider1ContextWindow());
+      cbAiProvider1Thinking_ = checkboxPref(prefs_.aiProvider1ThinkingEnabled(), true);
+      cbAiProvider1Vision_ = checkboxPref(prefs_.aiProvider1VisionEnabled(), true);
 
       // Custom provider 2 configuration
       tbAiProvider2Name_ = new TextBox();
@@ -367,6 +369,8 @@ public class AssistantPreferencesPane extends PreferencesPane
             1,
             1000000,
             prefs_.aiProvider2ContextWindow());
+      cbAiProvider2Thinking_ = checkboxPref(prefs_.aiProvider2ThinkingEnabled(), true);
+      cbAiProvider2Vision_ = checkboxPref(prefs_.aiProvider2VisionEnabled(), true);
 
       // Custom provider 3 configuration
       tbAiProvider3Name_ = new TextBox();
@@ -386,6 +390,8 @@ public class AssistantPreferencesPane extends PreferencesPane
             1,
             1000000,
             prefs_.aiProvider3ContextWindow());
+      cbAiProvider3Thinking_ = checkboxPref(prefs_.aiProvider3ThinkingEnabled(), true);
+      cbAiProvider3Vision_ = checkboxPref(prefs_.aiProvider3VisionEnabled(), true);
 
       linkCopilotTos_ = new HelpLink(
             constants_.copilotTermsOfServiceLinkLabel(),
@@ -682,6 +688,8 @@ public class AssistantPreferencesPane extends PreferencesPane
       panel.add(labeledInput(prefs_.aiProvider1ApiKey().getTitle(), tbAiProvider1ApiKey_));
       panel.add(labeledInput(prefs_.aiProvider1Model().getTitle(), tbAiProvider1Model_));
       panel.add(nvwAiProvider1ContextWindow_);
+      panel.add(cbAiProvider1Thinking_);
+      panel.add(cbAiProvider1Vision_);
       return panel;
    }
 
@@ -694,6 +702,8 @@ public class AssistantPreferencesPane extends PreferencesPane
       panel.add(labeledInput(prefs_.aiProvider2ApiKey().getTitle(), tbAiProvider2ApiKey_));
       panel.add(labeledInput(prefs_.aiProvider2Model().getTitle(), tbAiProvider2Model_));
       panel.add(nvwAiProvider2ContextWindow_);
+      panel.add(cbAiProvider2Thinking_);
+      panel.add(cbAiProvider2Vision_);
       return panel;
    }
 
@@ -706,6 +716,8 @@ public class AssistantPreferencesPane extends PreferencesPane
       panel.add(labeledInput(prefs_.aiProvider3ApiKey().getTitle(), tbAiProvider3ApiKey_));
       panel.add(labeledInput(prefs_.aiProvider3Model().getTitle(), tbAiProvider3Model_));
       panel.add(nvwAiProvider3ContextWindow_);
+      panel.add(cbAiProvider3Thinking_);
+      panel.add(cbAiProvider3Vision_);
       return panel;
    }
 
@@ -1533,6 +1545,8 @@ public class AssistantPreferencesPane extends PreferencesPane
    private final PasswordTextBox tbAiProvider1ApiKey_;
    private final TextBox tbAiProvider1Model_;
    private final NumericValueWidget nvwAiProvider1ContextWindow_;
+   private final CheckBox cbAiProvider1Thinking_;
+   private final CheckBox cbAiProvider1Vision_;
 
    // Custom provider 2 UI
    private final TextBox tbAiProvider2Name_;
@@ -1540,6 +1554,8 @@ public class AssistantPreferencesPane extends PreferencesPane
    private final PasswordTextBox tbAiProvider2ApiKey_;
    private final TextBox tbAiProvider2Model_;
    private final NumericValueWidget nvwAiProvider2ContextWindow_;
+   private final CheckBox cbAiProvider2Thinking_;
+   private final CheckBox cbAiProvider2Vision_;
 
    // Custom provider 3 UI
    private final TextBox tbAiProvider3Name_;
@@ -1547,6 +1563,8 @@ public class AssistantPreferencesPane extends PreferencesPane
    private final PasswordTextBox tbAiProvider3ApiKey_;
    private final TextBox tbAiProvider3Model_;
    private final NumericValueWidget nvwAiProvider3ContextWindow_;
+   private final CheckBox cbAiProvider3Thinking_;
+   private final CheckBox cbAiProvider3Vision_;
 
    private final HelpLink linkCopilotTos_;
    private final Label lblCopilotTos_;

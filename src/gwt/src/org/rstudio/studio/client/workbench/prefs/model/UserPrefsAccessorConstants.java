@@ -2250,6 +2250,22 @@ public interface UserPrefsAccessorConstants extends Constants {
    String aiProvider1ContextWindowDescription();
 
    /**
+    * Enable reasoning/thinking output for the first custom AI provider.
+    */
+   @DefaultStringValue("Custom Provider 1 Thinking")
+   String aiProvider1ThinkingEnabledTitle();
+   @DefaultStringValue("Enable reasoning/thinking output for the first custom AI provider.")
+   String aiProvider1ThinkingEnabledDescription();
+
+   /**
+    * Enable vision capabilities for the first custom AI provider (chart/image analysis).
+    */
+   @DefaultStringValue("Custom Provider 1 Vision")
+   String aiProvider1VisionEnabledTitle();
+   @DefaultStringValue("Enable vision capabilities for the first custom AI provider (chart/image analysis).")
+   String aiProvider1VisionEnabledDescription();
+
+   /**
     * Display name for the second custom AI provider.
     */
    @DefaultStringValue("Custom Provider 2 Name")
@@ -2290,6 +2306,22 @@ public interface UserPrefsAccessorConstants extends Constants {
    String aiProvider2ContextWindowDescription();
 
    /**
+    * Enable reasoning/thinking output for the second custom AI provider.
+    */
+   @DefaultStringValue("Custom Provider 2 Thinking")
+   String aiProvider2ThinkingEnabledTitle();
+   @DefaultStringValue("Enable reasoning/thinking output for the second custom AI provider.")
+   String aiProvider2ThinkingEnabledDescription();
+
+   /**
+    * Enable vision capabilities for the second custom AI provider (chart/image analysis).
+    */
+   @DefaultStringValue("Custom Provider 2 Vision")
+   String aiProvider2VisionEnabledTitle();
+   @DefaultStringValue("Enable vision capabilities for the second custom AI provider (chart/image analysis).")
+   String aiProvider2VisionEnabledDescription();
+
+   /**
     * Display name for the third custom AI provider.
     */
    @DefaultStringValue("Custom Provider 3 Name")
@@ -2328,6 +2360,22 @@ public interface UserPrefsAccessorConstants extends Constants {
    String aiProvider3ContextWindowTitle();
    @DefaultStringValue("Maximum context window size in tokens for the third custom AI provider.")
    String aiProvider3ContextWindowDescription();
+
+   /**
+    * Enable reasoning/thinking output for the third custom AI provider.
+    */
+   @DefaultStringValue("Custom Provider 3 Thinking")
+   String aiProvider3ThinkingEnabledTitle();
+   @DefaultStringValue("Enable reasoning/thinking output for the third custom AI provider.")
+   String aiProvider3ThinkingEnabledDescription();
+
+   /**
+    * Enable vision capabilities for the third custom AI provider (chart/image analysis).
+    */
+   @DefaultStringValue("Custom Provider 3 Vision")
+   String aiProvider3VisionEnabledTitle();
+   @DefaultStringValue("Enable vision capabilities for the third custom AI provider (chart/image analysis).")
+   String aiProvider3VisionEnabledDescription();
 
    /**
     * Control when code suggestions are displayed in the editor.

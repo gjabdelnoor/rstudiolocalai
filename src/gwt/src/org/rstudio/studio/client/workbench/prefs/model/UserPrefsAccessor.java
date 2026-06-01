@@ -312,16 +312,22 @@ public class UserPrefsAccessor extends Prefs
    public static final String AI_PROVIDER_1_API_KEY = "ai_provider_1_api_key"; // pragma: allowlist secret
    public static final String AI_PROVIDER_1_MODEL = "ai_provider_1_model";
    public static final String AI_PROVIDER_1_CONTEXT_WINDOW = "ai_provider_1_context_window";
+   public static final String AI_PROVIDER_1_THINKING_ENABLED = "ai_provider_1_thinking_enabled";
+   public static final String AI_PROVIDER_1_VISION_ENABLED = "ai_provider_1_vision_enabled";
    public static final String AI_PROVIDER_2_NAME = "ai_provider_2_name";
    public static final String AI_PROVIDER_2_BASE_URL = "ai_provider_2_base_url";
    public static final String AI_PROVIDER_2_API_KEY = "ai_provider_2_api_key"; // pragma: allowlist secret
    public static final String AI_PROVIDER_2_MODEL = "ai_provider_2_model";
    public static final String AI_PROVIDER_2_CONTEXT_WINDOW = "ai_provider_2_context_window";
+   public static final String AI_PROVIDER_2_THINKING_ENABLED = "ai_provider_2_thinking_enabled";
+   public static final String AI_PROVIDER_2_VISION_ENABLED = "ai_provider_2_vision_enabled";
    public static final String AI_PROVIDER_3_NAME = "ai_provider_3_name";
    public static final String AI_PROVIDER_3_BASE_URL = "ai_provider_3_base_url";
    public static final String AI_PROVIDER_3_API_KEY = "ai_provider_3_api_key"; // pragma: allowlist secret
    public static final String AI_PROVIDER_3_MODEL = "ai_provider_3_model";
    public static final String AI_PROVIDER_3_CONTEXT_WINDOW = "ai_provider_3_context_window";
+   public static final String AI_PROVIDER_3_THINKING_ENABLED = "ai_provider_3_thinking_enabled";
+   public static final String AI_PROVIDER_3_VISION_ENABLED = "ai_provider_3_vision_enabled";
    public static final String ASSISTANT_COMPLETIONS_TRIGGER = "assistant_completions_trigger";
    public static final String ASSISTANT_COMPLETIONS_DELAY = "assistant_completions_delay";
    public static final String ASSISTANT_TAB_KEY_BEHAVIOR = "assistant_tab_key_behavior";
@@ -4151,6 +4157,30 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * Enable reasoning/thinking output for the first custom AI provider.
+    */
+   public PrefValue<Boolean> aiProvider1ThinkingEnabled()
+   {
+      return bool(
+         "ai_provider_1_thinking_enabled",
+         _constants.aiProvider1ThinkingEnabledTitle(), 
+         _constants.aiProvider1ThinkingEnabledDescription(), 
+         false);
+   }
+
+   /**
+    * Enable vision capabilities for the first custom AI provider (chart/image analysis).
+    */
+   public PrefValue<Boolean> aiProvider1VisionEnabled()
+   {
+      return bool(
+         "ai_provider_1_vision_enabled",
+         _constants.aiProvider1VisionEnabledTitle(), 
+         _constants.aiProvider1VisionEnabledDescription(), 
+         false);
+   }
+
+   /**
     * Display name for the second custom AI provider.
     */
    public PrefValue<String> aiProvider2Name()
@@ -4211,6 +4241,30 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * Enable reasoning/thinking output for the second custom AI provider.
+    */
+   public PrefValue<Boolean> aiProvider2ThinkingEnabled()
+   {
+      return bool(
+         "ai_provider_2_thinking_enabled",
+         _constants.aiProvider2ThinkingEnabledTitle(), 
+         _constants.aiProvider2ThinkingEnabledDescription(), 
+         false);
+   }
+
+   /**
+    * Enable vision capabilities for the second custom AI provider (chart/image analysis).
+    */
+   public PrefValue<Boolean> aiProvider2VisionEnabled()
+   {
+      return bool(
+         "ai_provider_2_vision_enabled",
+         _constants.aiProvider2VisionEnabledTitle(), 
+         _constants.aiProvider2VisionEnabledDescription(), 
+         false);
+   }
+
+   /**
     * Display name for the third custom AI provider.
     */
    public PrefValue<String> aiProvider3Name()
@@ -4268,6 +4322,30 @@ public class UserPrefsAccessor extends Prefs
          _constants.aiProvider3ContextWindowTitle(), 
          _constants.aiProvider3ContextWindowDescription(), 
          8192);
+   }
+
+   /**
+    * Enable reasoning/thinking output for the third custom AI provider.
+    */
+   public PrefValue<Boolean> aiProvider3ThinkingEnabled()
+   {
+      return bool(
+         "ai_provider_3_thinking_enabled",
+         _constants.aiProvider3ThinkingEnabledTitle(), 
+         _constants.aiProvider3ThinkingEnabledDescription(), 
+         false);
+   }
+
+   /**
+    * Enable vision capabilities for the third custom AI provider (chart/image analysis).
+    */
+   public PrefValue<Boolean> aiProvider3VisionEnabled()
+   {
+      return bool(
+         "ai_provider_3_vision_enabled",
+         _constants.aiProvider3VisionEnabledTitle(), 
+         _constants.aiProvider3VisionEnabledDescription(), 
+         false);
    }
 
    /**
@@ -5218,6 +5296,10 @@ public class UserPrefsAccessor extends Prefs
          aiProvider1Model().setValue(layer, source.getString("ai_provider_1_model"));
       if (source.hasKey("ai_provider_1_context_window"))
          aiProvider1ContextWindow().setValue(layer, source.getInteger("ai_provider_1_context_window"));
+      if (source.hasKey("ai_provider_1_thinking_enabled"))
+         aiProvider1ThinkingEnabled().setValue(layer, source.getBool("ai_provider_1_thinking_enabled"));
+      if (source.hasKey("ai_provider_1_vision_enabled"))
+         aiProvider1VisionEnabled().setValue(layer, source.getBool("ai_provider_1_vision_enabled"));
       if (source.hasKey("ai_provider_2_name"))
          aiProvider2Name().setValue(layer, source.getString("ai_provider_2_name"));
       if (source.hasKey("ai_provider_2_base_url"))
@@ -5228,6 +5310,10 @@ public class UserPrefsAccessor extends Prefs
          aiProvider2Model().setValue(layer, source.getString("ai_provider_2_model"));
       if (source.hasKey("ai_provider_2_context_window"))
          aiProvider2ContextWindow().setValue(layer, source.getInteger("ai_provider_2_context_window"));
+      if (source.hasKey("ai_provider_2_thinking_enabled"))
+         aiProvider2ThinkingEnabled().setValue(layer, source.getBool("ai_provider_2_thinking_enabled"));
+      if (source.hasKey("ai_provider_2_vision_enabled"))
+         aiProvider2VisionEnabled().setValue(layer, source.getBool("ai_provider_2_vision_enabled"));
       if (source.hasKey("ai_provider_3_name"))
          aiProvider3Name().setValue(layer, source.getString("ai_provider_3_name"));
       if (source.hasKey("ai_provider_3_base_url"))
@@ -5238,6 +5324,10 @@ public class UserPrefsAccessor extends Prefs
          aiProvider3Model().setValue(layer, source.getString("ai_provider_3_model"));
       if (source.hasKey("ai_provider_3_context_window"))
          aiProvider3ContextWindow().setValue(layer, source.getInteger("ai_provider_3_context_window"));
+      if (source.hasKey("ai_provider_3_thinking_enabled"))
+         aiProvider3ThinkingEnabled().setValue(layer, source.getBool("ai_provider_3_thinking_enabled"));
+      if (source.hasKey("ai_provider_3_vision_enabled"))
+         aiProvider3VisionEnabled().setValue(layer, source.getBool("ai_provider_3_vision_enabled"));
       if (source.hasKey("assistant_completions_trigger"))
          assistantCompletionsTrigger().setValue(layer, source.getString("assistant_completions_trigger"));
       if (source.hasKey("assistant_completions_delay"))
@@ -5564,16 +5654,22 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(aiProvider1ApiKey());
       prefs.add(aiProvider1Model());
       prefs.add(aiProvider1ContextWindow());
+      prefs.add(aiProvider1ThinkingEnabled());
+      prefs.add(aiProvider1VisionEnabled());
       prefs.add(aiProvider2Name());
       prefs.add(aiProvider2BaseUrl());
       prefs.add(aiProvider2ApiKey());
       prefs.add(aiProvider2Model());
       prefs.add(aiProvider2ContextWindow());
+      prefs.add(aiProvider2ThinkingEnabled());
+      prefs.add(aiProvider2VisionEnabled());
       prefs.add(aiProvider3Name());
       prefs.add(aiProvider3BaseUrl());
       prefs.add(aiProvider3ApiKey());
       prefs.add(aiProvider3Model());
       prefs.add(aiProvider3ContextWindow());
+      prefs.add(aiProvider3ThinkingEnabled());
+      prefs.add(aiProvider3VisionEnabled());
       prefs.add(assistantCompletionsTrigger());
       prefs.add(assistantCompletionsDelay());
       prefs.add(assistantTabKeyBehavior());

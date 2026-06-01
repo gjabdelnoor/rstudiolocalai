@@ -112,7 +112,7 @@ public class PaiUtil
     */
    public boolean isChatProviderPosit()
    {
-      return getConfiguredChatProvider().equals(UserPrefsAccessor.CHAT_PROVIDER_POSIT);
+      return UserPrefsAccessor.CHAT_PROVIDER_POSIT.equals(getConfiguredChatProvider());
    }
 
    /**
@@ -121,9 +121,9 @@ public class PaiUtil
    public boolean isCustomChatProvider()
    {
       String provider = getConfiguredChatProvider();
-      return provider.equals(UserPrefsAccessor.CHAT_PROVIDER_CUSTOM_1) ||
-             provider.equals(UserPrefsAccessor.CHAT_PROVIDER_CUSTOM_2) ||
-             provider.equals(UserPrefsAccessor.CHAT_PROVIDER_CUSTOM_3);
+      return UserPrefsAccessor.CHAT_PROVIDER_CUSTOM_1.equals(provider) ||
+             UserPrefsAccessor.CHAT_PROVIDER_CUSTOM_2.equals(provider) ||
+             UserPrefsAccessor.CHAT_PROVIDER_CUSTOM_3.equals(provider);
    }
 
    /**
@@ -135,7 +135,7 @@ public class PaiUtil
     */
    public boolean isChatProviderNone()
    {
-      return getConfiguredChatProvider().equals(UserPrefsAccessor.CHAT_PROVIDER_NONE);
+      return UserPrefsAccessor.CHAT_PROVIDER_NONE.equals(getConfiguredChatProvider());
    }
 
    /**

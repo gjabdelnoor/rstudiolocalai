@@ -112,17 +112,17 @@ public class AssistantPreferencesPane extends PreferencesPane
       // Save custom provider settings
       prefs.aiProvider1Name().setGlobalValue(tbAiProvider1Name_.getText().trim());
       prefs.aiProvider1BaseUrl().setGlobalValue(tbAiProvider1BaseUrl_.getText().trim());
-      prefs.aiProvider1ApiKey().setGlobalValue(tbAiProvider1ApiKey_.getText());
+      prefs.aiProvider1ApiKey().setGlobalValue(tbAiProvider1ApiKey_.getText().trim());
       prefs.aiProvider1Model().setGlobalValue(tbAiProvider1Model_.getText().trim());
 
       prefs.aiProvider2Name().setGlobalValue(tbAiProvider2Name_.getText().trim());
       prefs.aiProvider2BaseUrl().setGlobalValue(tbAiProvider2BaseUrl_.getText().trim());
-      prefs.aiProvider2ApiKey().setGlobalValue(tbAiProvider2ApiKey_.getText());
+      prefs.aiProvider2ApiKey().setGlobalValue(tbAiProvider2ApiKey_.getText().trim());
       prefs.aiProvider2Model().setGlobalValue(tbAiProvider2Model_.getText().trim());
 
       prefs.aiProvider3Name().setGlobalValue(tbAiProvider3Name_.getText().trim());
       prefs.aiProvider3BaseUrl().setGlobalValue(tbAiProvider3BaseUrl_.getText().trim());
-      prefs.aiProvider3ApiKey().setGlobalValue(tbAiProvider3ApiKey_.getText());
+      prefs.aiProvider3ApiKey().setGlobalValue(tbAiProvider3ApiKey_.getText().trim());
       prefs.aiProvider3Model().setGlobalValue(tbAiProvider3Model_.getText().trim());
 
       return super.onApply(prefs);
@@ -682,7 +682,7 @@ public class AssistantPreferencesPane extends PreferencesPane
    private VerticalPanel createCustomProvider1Panel()
    {
       VerticalPanel panel = new VerticalPanel();
-      panel.add(spacedBefore(headerLabel("Custom Provider 1")));
+      panel.add(spacedBefore(headerLabel(prefsConstants_.chatProviderEnum_custom_1())));
       panel.add(labeledInput(prefs_.aiProvider1Name().getTitle(), tbAiProvider1Name_));
       panel.add(labeledInput(prefs_.aiProvider1BaseUrl().getTitle(), tbAiProvider1BaseUrl_));
       panel.add(labeledInput(prefs_.aiProvider1ApiKey().getTitle(), tbAiProvider1ApiKey_));
@@ -696,7 +696,7 @@ public class AssistantPreferencesPane extends PreferencesPane
    private VerticalPanel createCustomProvider2Panel()
    {
       VerticalPanel panel = new VerticalPanel();
-      panel.add(spacedBefore(headerLabel("Custom Provider 2")));
+      panel.add(spacedBefore(headerLabel(prefsConstants_.chatProviderEnum_custom_2())));
       panel.add(labeledInput(prefs_.aiProvider2Name().getTitle(), tbAiProvider2Name_));
       panel.add(labeledInput(prefs_.aiProvider2BaseUrl().getTitle(), tbAiProvider2BaseUrl_));
       panel.add(labeledInput(prefs_.aiProvider2ApiKey().getTitle(), tbAiProvider2ApiKey_));
@@ -710,7 +710,7 @@ public class AssistantPreferencesPane extends PreferencesPane
    private VerticalPanel createCustomProvider3Panel()
    {
       VerticalPanel panel = new VerticalPanel();
-      panel.add(spacedBefore(headerLabel("Custom Provider 3")));
+      panel.add(spacedBefore(headerLabel(prefsConstants_.chatProviderEnum_custom_3())));
       panel.add(labeledInput(prefs_.aiProvider3Name().getTitle(), tbAiProvider3Name_));
       panel.add(labeledInput(prefs_.aiProvider3BaseUrl().getTitle(), tbAiProvider3BaseUrl_));
       panel.add(labeledInput(prefs_.aiProvider3ApiKey().getTitle(), tbAiProvider3ApiKey_));

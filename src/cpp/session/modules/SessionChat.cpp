@@ -4882,7 +4882,7 @@ Error startChatBackend(bool resumeConversation)
             visionEnabled = prefs::userPrefs().aiProvider3VisionEnabled();
             break;
       }
-      if (!baseUrl.empty())
+      if (!baseUrl.empty() && !model.empty())
       {
          core::system::setenv(&environment, "PA_PROVIDER", "openaiCompatible");
          core::system::setenv(&environment, "PA_MODEL", model);
@@ -4896,6 +4896,10 @@ Error startChatBackend(bool resumeConversation)
                               visionEnabled ? "1" : "0");
          DLOG("Custom provider {} configured: model={}, baseUrl={}, thinking={}, vision={}",
               idx, model, baseUrl, thinkingEnabled, visionEnabled);
+      }
+      else if (!baseUrl.empty())
+      {
+         WLOG("Custom provider {} base URL is set but model is empty; skipping custom configuration", idx);
       }
    }
 
@@ -5949,8 +5953,8 @@ Error initialize()
    }
 
    // Validate chat provider preference consistency
-   // If user has Posit selected as chat provider but PAI is no longer available, reset to "none"
-   if (isChatProviderPosit() && !isPositAssistantEnabledByAdmin())
+   // If user has Posit or a custom provider selected but PAI is no longer available, reset to "none"
+   if ((isChatProviderPosit() || isCustomChatProvider()) && !isPositAssistantEnabledByAdmin())
    {
       prefs::userPrefs().setChatProvider(kChatProviderNone);
    }

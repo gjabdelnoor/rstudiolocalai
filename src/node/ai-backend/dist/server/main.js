@@ -149,6 +149,12 @@ const pendingRStudioRequests = new Map(); // id -> { resolve, reject, timer }
 let rpcIdCounter = 1;
 let stdinBuffer = Buffer.alloc(0);
 
+// True once RStudio has sent at least one valid framed message on stdin
+// (LSP-style: the client initializes first). Until then we are running
+// standalone (or under a test harness) and must not block requests waiting
+// for RStudio capabilities that will never answer.
+let rstudioConnected = false;
+
 function indexOfCRLFCRLF(buf)
 {
    for (let i = 0; i < buf.length - 3; i++)
@@ -188,6 +194,13 @@ function parseStdinMessages()
       let msg;
       try { msg = JSON.parse(body); }
       catch (e) { log('WARN', `Failed to parse stdin JSON-RPC: ${e.message}`); continue; }
+
+      // A valid frame means RStudio is on the other end of the pipe.
+      if (!rstudioConnected)
+      {
+         rstudioConnected = true;
+         log('INFO', 'RStudio JSON-RPC channel connected');
+      }
 
       // Match the response to a pending callRStudio() promise
       if (msg.id !== undefined && msg.id !== null)
@@ -642,16 +655,21 @@ function buildRequestBody(history, cfg, contextStr)
 async function streamCompletion(ws, requestId, history, cfg)
 {
    // Fetch RStudio context (open files, R workspace, cursor position).
-   // Fail gracefully -- missing context is better than a broken chat.
+   // Only attempt this when RStudio is actually connected; otherwise we would
+   // block on a request that never gets answered. Fail gracefully either way
+   // -- missing context is better than a broken chat.
    let contextStr = null;
-   try
+   if (rstudioConnected)
    {
-      const ctx = await callRStudio('runtime/getDetailedContext', {}, 4000);
-      contextStr = formatRStudioContext(ctx);
-   }
-   catch (e)
-   {
-      log('DEBUG', `Could not fetch RStudio context: ${e.message}`);
+      try
+      {
+         const ctx = await callRStudio('runtime/getDetailedContext', {}, 4000);
+         contextStr = formatRStudioContext(ctx);
+      }
+      catch (e)
+      {
+         log('DEBUG', `Could not fetch RStudio context: ${e.message}`);
+      }
    }
 
    const url = cfg.baseUrl + '/chat/completions';
